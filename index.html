@@ -261,72 +261,6 @@
             font-weight: bold;
         }
 
-        .interactive-demo {
-            margin: 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 20px;
-        }
-
-        .demo-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .demo-controls {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .demo-input {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .demo-switch {
-            width: 60px;
-            height: 30px;
-            background: #e5e7eb;
-            border-radius: 15px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .demo-switch.active {
-            background: #10b981;
-        }
-
-        .demo-switch::after {
-            content: '';
-            width: 26px;
-            height: 26px;
-            background: white;
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .demo-switch.active::after {
-            left: 32px;
-        }
-
-        .demo-result {
-            text-align: center;
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-        }
 
         .toolbar-enhanced {
             display: flex;
@@ -436,6 +370,19 @@
                     <button class="tool-button control-button" id="loadCircuit">読込</button>
                 </div>
 
+                <div class="tool-group">
+                    <label>テンプレート:</label>
+                    <select id="templateSelect">
+                        <option value="">選択してください</option>
+                        <option value="half_adder">半加算器</option>
+                        <option value="full_adder">全加算器</option>
+                        <option value="mux2to1">2-to-1マルチプレクサ</option>
+                        <option value="decoder2to4">2-to-4デコーダ</option>
+                        <option value="sr_latch">SRラッチ</option>
+                    </select>
+                    <button class="tool-button control-button" id="loadTemplate">読込</button>
+                </div>
+
                 <div class="mode-indicator" id="modeIndicator">
                     配置モード: 回路を選択してください
                 </div>
@@ -515,12 +462,12 @@
                                 <svg width="70" height="40" viewBox="0 0 70 40">
                                     <path d="M5 5 Q15 5 25 20 Q15 35 5 35 Q20 20 5 5" 
                                           fill="none" stroke="#374151" stroke-width="2"/>
-                                    <path d="M25 20 Q40 5 50 20 Q40 35 25 20" 
+                                    <path d="M25 5 Q40 10 50 20 Q40 30 25 35" 
                                           fill="none" stroke="#374151" stroke-width="2"/>
-                                    <line x1="0" y1="12" x2="8" y2="12" stroke="#374151" stroke-width="2"/>
-                                    <line x1="0" y1="28" x2="8" y2="28" stroke="#374151" stroke-width="2"/>
+                                    <line x1="0" y1="12" x2="7" y2="12" stroke="#374151" stroke-width="2"/>
+                                    <line x1="0" y1="28" x2="7" y2="28" stroke="#374151" stroke-width="2"/>
                                     <line x1="50" y1="20" x2="60" y2="20" stroke="#374151" stroke-width="2"/>
-                                    <text x="25" y="23" text-anchor="middle" fill="#374151" font-size="10">OR</text>
+                                    <text x="27" y="23" text-anchor="middle" fill="#374151" font-size="10">OR</text>
                                 </svg>
                             </div>
                         </div>
@@ -590,36 +537,6 @@
             </div>
         </div>
 
-        <!-- インタラクティブデモ -->
-        <div class="interactive-demo">
-            <div class="demo-header">
-                <h3>🎮 インタラクティブデモ - 回路をテストしよう！</h3>
-                <p>スイッチを切り替えて各回路の動作を確認できます</p>
-            </div>
-            <div class="demo-controls">
-                <div class="demo-input">
-                    <label>入力A</label>
-                    <div class="demo-switch" id="demoInputA"></div>
-                    <span id="demoValueA">0</span>
-                </div>
-                <div class="demo-input">
-                    <label>入力B</label>
-                    <div class="demo-switch" id="demoInputB"></div>
-                    <span id="demoValueB">0</span>
-                </div>
-                <div class="demo-input">
-                    <label>回路選択</label>
-                    <select id="demoGateSelect">
-                        <option value="AND">AND回路</option>
-                        <option value="OR">OR回路</option>
-                        <option value="NOT">NOT回路</option>
-                    </select>
-                </div>
-            </div>
-            <div class="demo-result" id="demoResult">
-                出力: <span id="demoOutput">0</span>
-            </div>
-        </div>
 
         <div class="status-bar">
             <div>
@@ -702,10 +619,13 @@
                         this.outputValue = this.inputValues[0] === 1 ? 0 : 1;
                         break;
                     case 'INPUT':
-                        // 入力回路はクリックで値を変更
+                        // 入力回路は手動で値を設定（outputValueがそのまま出力）
                         break;
                     case 'OUTPUT':
-                        this.outputValue = this.inputValues[0] || 0;
+                        // 出力回路は入力値をそのまま表示
+                        if(this.inputValues.length > 0) {
+                            this.outputValue = this.inputValues[0];
+                        }
                         break;
                 }
             }
@@ -1090,10 +1010,151 @@
         let dragOffset = {x: 0, y: 0};
         let deleteMode = false;
 
-        // インタラクティブデモの変数
-        let demoInputA = false;
-        let demoInputB = false;
-        let demoGateType = 'AND';
+        // テンプレート回路のデータ
+        const circuitTemplates = {
+            half_adder: {
+                name: "半加算器",
+                description: "2つの1ビット数を加算し、和とキャリーを出力",
+                gates: [
+                    {id: 1, type: "INPUT", x: 50, y: 100, outputValue: 0},
+                    {id: 2, type: "INPUT", x: 50, y: 200, outputValue: 0},
+                    {id: 3, type: "AND", x: 250, y: 80, outputValue: 0},
+                    {id: 4, type: "OR", x: 250, y: 180, outputValue: 0},
+                    {id: 5, type: "NOT", x: 400, y: 120, outputValue: 0},
+                    {id: 6, type: "AND", x: 550, y: 140, outputValue: 0},
+                    {id: 7, type: "OUTPUT", x: 700, y: 80, outputValue: 0},
+                    {id: 8, type: "OUTPUT", x: 700, y: 180, outputValue: 0}
+                ],
+                connections: [
+                    {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+                    {fromGateId: 2, fromPin: 0, toGateId: 3, toPin: 1},
+                    {fromGateId: 1, fromPin: 0, toGateId: 4, toPin: 0},
+                    {fromGateId: 2, fromPin: 0, toGateId: 4, toPin: 1},
+                    {fromGateId: 3, fromPin: 0, toGateId: 5, toPin: 0},
+                    {fromGateId: 4, fromPin: 0, toGateId: 6, toPin: 0},
+                    {fromGateId: 5, fromPin: 0, toGateId: 6, toPin: 1},
+                    {fromGateId: 3, fromPin: 0, toGateId: 7, toPin: 0},
+                    {fromGateId: 6, fromPin: 0, toGateId: 8, toPin: 0}
+                ]
+            },
+            full_adder: {
+                name: "全加算器",
+                description: "3つの1ビット数を加算し、和とキャリーを出力",
+                gates: [
+                    {id: 1, type: "INPUT", x: 50, y: 80, outputValue: 0},
+                    {id: 2, type: "INPUT", x: 50, y: 160, outputValue: 0},
+                    {id: 3, type: "INPUT", x: 50, y: 240, outputValue: 0},
+                    {id: 4, type: "AND", x: 200, y: 60, outputValue: 0},
+                    {id: 5, type: "AND", x: 200, y: 140, outputValue: 0},
+                    {id: 6, type: "AND", x: 200, y: 220, outputValue: 0},
+                    {id: 7, type: "OR", x: 350, y: 100, outputValue: 0},
+                    {id: 8, type: "OR", x: 350, y: 180, outputValue: 0},
+                    {id: 9, type: "NOT", x: 500, y: 140, outputValue: 0},
+                    {id: 10, type: "AND", x: 650, y: 160, outputValue: 0},
+                    {id: 11, type: "OUTPUT", x: 800, y: 100, outputValue: 0},
+                    {id: 12, type: "OUTPUT", x: 800, y: 200, outputValue: 0}
+                ],
+                connections: [
+                    {fromGateId: 1, fromPin: 0, toGateId: 4, toPin: 0},
+                    {fromGateId: 2, fromPin: 0, toGateId: 4, toPin: 1},
+                    {fromGateId: 1, fromPin: 0, toGateId: 5, toPin: 0},
+                    {fromGateId: 3, fromPin: 0, toGateId: 5, toPin: 1},
+                    {fromGateId: 2, fromPin: 0, toGateId: 6, toPin: 0},
+                    {fromGateId: 3, fromPin: 0, toGateId: 6, toPin: 1},
+                    {fromGateId: 4, fromPin: 0, toGateId: 7, toPin: 0},
+                    {fromGateId: 5, fromPin: 0, toGateId: 7, toPin: 1},
+                    {fromGateId: 5, fromPin: 0, toGateId: 8, toPin: 0},
+                    {fromGateId: 6, fromPin: 0, toGateId: 8, toPin: 1},
+                    {fromGateId: 7, fromPin: 0, toGateId: 9, toPin: 0},
+                    {fromGateId: 8, fromPin: 0, toGateId: 10, toPin: 0},
+                    {fromGateId: 9, fromPin: 0, toGateId: 10, toPin: 1},
+                    {fromGateId: 7, fromPin: 0, toGateId: 11, toPin: 0},
+                    {fromGateId: 10, fromPin: 0, toGateId: 12, toPin: 0}
+                ]
+            },
+            mux2to1: {
+                name: "2-to-1マルチプレクサ",
+                description: "セレクト信号により2つの入力のうち1つを選択",
+                gates: [
+                    {id: 1, type: "INPUT", x: 50, y: 80, outputValue: 0},
+                    {id: 2, type: "INPUT", x: 50, y: 160, outputValue: 0},
+                    {id: 3, type: "INPUT", x: 50, y: 240, outputValue: 0},
+                    {id: 4, type: "NOT", x: 200, y: 240, outputValue: 0},
+                    {id: 5, type: "AND", x: 350, y: 100, outputValue: 0},
+                    {id: 6, type: "AND", x: 350, y: 200, outputValue: 0},
+                    {id: 7, type: "OR", x: 500, y: 150, outputValue: 0},
+                    {id: 8, type: "OUTPUT", x: 650, y: 150, outputValue: 0}
+                ],
+                connections: [
+                    {fromGateId: 3, fromPin: 0, toGateId: 4, toPin: 0},
+                    {fromGateId: 1, fromPin: 0, toGateId: 5, toPin: 0},
+                    {fromGateId: 4, fromPin: 0, toGateId: 5, toPin: 1},
+                    {fromGateId: 2, fromPin: 0, toGateId: 6, toPin: 0},
+                    {fromGateId: 3, fromPin: 0, toGateId: 6, toPin: 1},
+                    {fromGateId: 5, fromPin: 0, toGateId: 7, toPin: 0},
+                    {fromGateId: 6, fromPin: 0, toGateId: 7, toPin: 1},
+                    {fromGateId: 7, fromPin: 0, toGateId: 8, toPin: 0}
+                ]
+            },
+            decoder2to4: {
+                name: "2-to-4デコーダ",
+                description: "2ビット入力を4つの出力線にデコード",
+                gates: [
+                    {id: 1, type: "INPUT", x: 50, y: 100, outputValue: 0},
+                    {id: 2, type: "INPUT", x: 50, y: 200, outputValue: 0},
+                    {id: 3, type: "NOT", x: 150, y: 100, outputValue: 0},
+                    {id: 4, type: "NOT", x: 150, y: 200, outputValue: 0},
+                    {id: 5, type: "AND", x: 300, y: 80, outputValue: 0},
+                    {id: 6, type: "AND", x: 300, y: 140, outputValue: 0},
+                    {id: 7, type: "AND", x: 300, y: 200, outputValue: 0},
+                    {id: 8, type: "AND", x: 300, y: 260, outputValue: 0},
+                    {id: 9, type: "OUTPUT", x: 450, y: 80, outputValue: 0},
+                    {id: 10, type: "OUTPUT", x: 450, y: 140, outputValue: 0},
+                    {id: 11, type: "OUTPUT", x: 450, y: 200, outputValue: 0},
+                    {id: 12, type: "OUTPUT", x: 450, y: 260, outputValue: 0}
+                ],
+                connections: [
+                    {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+                    {fromGateId: 2, fromPin: 0, toGateId: 4, toPin: 0},
+                    {fromGateId: 3, fromPin: 0, toGateId: 5, toPin: 0},
+                    {fromGateId: 4, fromPin: 0, toGateId: 5, toPin: 1},
+                    {fromGateId: 1, fromPin: 0, toGateId: 6, toPin: 0},
+                    {fromGateId: 4, fromPin: 0, toGateId: 6, toPin: 1},
+                    {fromGateId: 3, fromPin: 0, toGateId: 7, toPin: 0},
+                    {fromGateId: 2, fromPin: 0, toGateId: 7, toPin: 1},
+                    {fromGateId: 1, fromPin: 0, toGateId: 8, toPin: 0},
+                    {fromGateId: 2, fromPin: 0, toGateId: 8, toPin: 1},
+                    {fromGateId: 5, fromPin: 0, toGateId: 9, toPin: 0},
+                    {fromGateId: 6, fromPin: 0, toGateId: 10, toPin: 0},
+                    {fromGateId: 7, fromPin: 0, toGateId: 11, toPin: 0},
+                    {fromGateId: 8, fromPin: 0, toGateId: 12, toPin: 0}
+                ]
+            },
+            sr_latch: {
+                name: "SRラッチ",
+                description: "セット・リセット機能を持つ基本的なラッチ回路",
+                gates: [
+                    {id: 1, type: "INPUT", x: 50, y: 100, outputValue: 0},
+                    {id: 2, type: "INPUT", x: 50, y: 200, outputValue: 0},
+                    {id: 3, type: "OR", x: 200, y: 120, outputValue: 0},
+                    {id: 4, type: "OR", x: 200, y: 180, outputValue: 0},
+                    {id: 5, type: "NOT", x: 350, y: 120, outputValue: 0},
+                    {id: 6, type: "NOT", x: 350, y: 180, outputValue: 0},
+                    {id: 7, type: "OUTPUT", x: 500, y: 120, outputValue: 0},
+                    {id: 8, type: "OUTPUT", x: 500, y: 180, outputValue: 0}
+                ],
+                connections: [
+                    {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+                    {fromGateId: 2, fromPin: 0, toGateId: 4, toPin: 1},
+                    {fromGateId: 3, fromPin: 0, toGateId: 5, toPin: 0},
+                    {fromGateId: 4, fromPin: 0, toGateId: 6, toPin: 0},
+                    {fromGateId: 6, fromPin: 0, toGateId: 3, toPin: 1},
+                    {fromGateId: 5, fromPin: 0, toGateId: 4, toPin: 0},
+                    {fromGateId: 5, fromPin: 0, toGateId: 7, toPin: 0},
+                    {fromGateId: 6, fromPin: 0, toGateId: 8, toPin: 0}
+                ]
+            }
+        };
 
         // イベントリスナー
         document.querySelectorAll('.gate-button').forEach(button => {
@@ -1236,6 +1297,34 @@
             input.click();
         });
 
+        // テンプレート読み込み機能
+        document.getElementById('loadTemplate').addEventListener('click', () => {
+            const templateSelect = document.getElementById('templateSelect');
+            const templateName = templateSelect.value;
+            
+            if (!templateName) {
+                alert('テンプレートを選択してください。');
+                return;
+            }
+            
+            const template = circuitTemplates[templateName];
+            if (!template) {
+                alert('選択されたテンプレートが見つかりません。');
+                return;
+            }
+            
+            if (simulator.gates.size > 0) {
+                if (!confirm(`現在の回路を削除して「${template.name}」を読み込みますか？\n\n説明: ${template.description}`)) {
+                    return;
+                }
+            }
+            
+            loadCircuitData(template);
+            templateSelect.value = '';
+            
+            alert(`テンプレート「${template.name}」を読み込みました！\n\n説明: ${template.description}\n\n入力回路をクリックして値を変更し、シミュレートボタンで動作を確認してください。`);
+        });
+
         // ドラッグ&ドロップのマウスイベント
         canvas.addEventListener('mousedown', (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -1352,57 +1441,6 @@
             draw();
         }
 
-        // インタラクティブデモの初期化
-        function initInteractiveDemo() {
-            const inputA = document.getElementById('demoInputA');
-            const inputB = document.getElementById('demoInputB');
-            const gateSelect = document.getElementById('demoGateSelect');
-            const valueA = document.getElementById('demoValueA');
-            const valueB = document.getElementById('demoValueB');
-            const output = document.getElementById('demoOutput');
-            const result = document.getElementById('demoResult');
-
-            function updateDemo() {
-                valueA.textContent = demoInputA ? '1' : '0';
-                valueB.textContent = demoInputB ? '1' : '0';
-                
-                let outputValue = 0;
-                switch (demoGateType) {
-                    case 'AND':
-                        outputValue = demoInputA && demoInputB ? 1 : 0;
-                        break;
-                    case 'OR':
-                        outputValue = demoInputA || demoInputB ? 1 : 0;
-                        break;
-                    case 'NOT':
-                        outputValue = demoInputA ? 0 : 1;
-                        break;
-                }
-                
-                output.textContent = outputValue;
-                result.style.background = outputValue ? '#dcfce7' : '#fef2f2';
-                result.style.color = outputValue ? '#166534' : '#991b1b';
-            }
-
-            inputA.addEventListener('click', () => {
-                demoInputA = !demoInputA;
-                inputA.classList.toggle('active', demoInputA);
-                updateDemo();
-            });
-
-            inputB.addEventListener('click', () => {
-                demoInputB = !demoInputB;
-                inputB.classList.toggle('active', demoInputB);
-                updateDemo();
-            });
-
-            gateSelect.addEventListener('change', (e) => {
-                demoGateType = e.target.value;
-                updateDemo();
-            });
-
-            updateDemo();
-        }
 
         function handleConnectionClick(x, y) {
             let clickedPin = null;
@@ -1512,7 +1550,6 @@
         // 初期化
         updateModeIndicator();
         draw();
-        initInteractiveDemo();
 
         // アニメーションループ（シミュレーション中の信号アニメーション用）
         function animate() {
