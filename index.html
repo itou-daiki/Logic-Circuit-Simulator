@@ -122,22 +122,8 @@
             background-size: 20px 20px;
         }
 
-        .instructions {
-            margin: 20px;
-            padding: 20px;
-            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-            border-radius: 10px;
-            border-left: 5px solid #10b981;
-        }
-
-        .instructions h3 {
-            margin-top: 0;
-            color: #047857;
-        }
-
-        .instructions ol {
-            color: #374151;
-            line-height: 1.6;
+        .canvas-container.delete-mode canvas {
+            cursor: crosshair;
         }
 
         .status-bar {
@@ -181,6 +167,12 @@
         .reset-button {
             background: #ef4444;
             color: white;
+        }
+
+        .tool-separator {
+            height: 1px;
+            background: #34495e;
+            margin: 10px 0;
         }
     </style>
 </head>
@@ -462,6 +454,43 @@
             updateSignal() {
                 this.signal = this.fromGate.outputValue;
                 this.toGate.inputValues[this.toPin] = this.signal;
+            }
+
+            containsPoint(x, y) {
+                // 接続線をクリックできるように当たり判定を追加
+                const fromX = this.from.pin.x;
+                const fromY = this.from.pin.y;
+                const toX = this.to.pin.x;
+                const toY = this.to.pin.y;
+                
+                // 簡易的な線分との距離計算
+                const A = x - fromX;
+                const B = y - fromY;
+                const C = toX - fromX;
+                const D = toY - fromY;
+                
+                const dot = A * C + B * D;
+                const lenSq = C * C + D * D;
+                
+                if (lenSq === 0) return false;
+                
+                const param = dot / lenSq;
+                
+                let xx, yy;
+                if (param < 0) {
+                    xx = fromX;
+                    yy = fromY;
+                } else if (param > 1) {
+                    xx = toX;
+                    yy = toY;
+                } else {
+                    xx = fromX + param * C;
+                    yy = fromY + param * D;
+                }
+                
+                const dx = x - xx;
+                const dy = y - yy;
+                return Math.sqrt(dx * dx + dy * dy) <= 10;
             }
         }
 
