@@ -285,6 +285,82 @@
             margin-right: 5px;
         }
 
+        .simulation-step {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .simulation-step.active {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .signal-flow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+
+        .signal-value {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .signal-high {
+            background: #ef4444;
+        }
+
+        .signal-low {
+            background: #6b7280;
+        }
+
+        .signal-arrow {
+            color: #6b7280;
+            font-size: 18px;
+        }
+
+        .gate-calculation {
+            background: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin: 3px 0;
+            font-size: 12px;
+        }
+
+        .step-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .step-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            color: #92400e;
+        }
+
         .status-bar {
             padding: 15px 20px;
             background: #1f2937;
@@ -404,6 +480,17 @@
                 <button class="sim-button step-button" id="stepBackward" disabled>◀ 戻る</button>
                 <button class="sim-button reset-button" id="resetSim">リセット</button>
             </div>
+        </div>
+
+        <!-- シミュレーション詳細表示 -->
+        <div id="simulationDetails" style="display: none; margin: 20px; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 20px;">
+            <h3>🔍 シミュレーション詳細 - 信号の流れ</h3>
+            <div class="step-controls">
+                <div class="step-info" id="currentStepInfo">ステップ 0: 初期状態</div>
+                <button class="sim-button step-button" id="autoStep" disabled>自動進行</button>
+                <button class="sim-button reset-button" id="pauseAuto" disabled>一時停止</button>
+            </div>
+            <div id="simulationSteps"></div>
         </div>
 
         <div class="instructions">
@@ -870,9 +957,13 @@
                 this.isRunning = true;
                 this.step = 0;
                 this.history = [];
+                this.detailedSteps = [];
 
                 // 初期状態をリセット
                 this.reset();
+                
+                // 詳細シミュレーション表示を開始
+                this.startDetailedSimulation();
                 
                 // 状態を保存
                 this.saveState();
@@ -885,11 +976,61 @@
                 draw();
             }
 
+            startDetailedSimulation() {
+                // 詳細表示エリアを表示
+                document.getElementById('simulationDetails').style.display = 'block';
+                document.getElementById('simulationSteps').innerHTML = '';
+                currentSimulationStep = 0;
+                
+                // 初期状態を記録
+                this.recordDetailedStep('初期状態', '入力値の設定と回路のリセット');
+                this.updateSimulationDisplay();
+            }
+
+            recordDetailedStep(title, description) {
+                const stepData = {
+                    step: this.detailedSteps.length,
+                    title: title,
+                    description: description,
+                    gateStates: new Map(),
+                    connectionStates: [],
+                    calculations: []
+                };
+
+                // 各回路の状態を記録
+                for(let [id, gate] of this.gates) {
+                    stepData.gateStates.set(id, {
+                        type: gate.type,
+                        inputValues: [...gate.inputValues],
+                        outputValue: gate.outputValue,
+                        x: gate.x,
+                        y: gate.y
+                    });
+                }
+
+                // 接続の状態を記録
+                stepData.connectionStates = this.connections.map(conn => ({
+                    fromGateId: conn.fromGate.id,
+                    toGateId: conn.toGate.id,
+                    signal: conn.signal,
+                    fromType: conn.fromGate.type,
+                    toType: conn.toGate.type
+                }));
+
+                this.detailedSteps.push(stepData);
+            }
+
             executeStep() {
+                // 信号伝播ステップを記録
+                this.recordDetailedStep(`ステップ ${this.step + 1} - 信号伝播`, '接続を通じて信号を伝播');
+                
                 // まず接続を通じて信号を伝播
                 for(let connection of this.connections) {
                     connection.updateSignal();
                 }
+
+                // 回路計算ステップを記録
+                this.recordDetailedStep(`ステップ ${this.step + 1} - 回路計算`, '各論理回路で演算を実行');
 
                 // 次に全ての回路を計算
                 for(let gate of this.gates.values()) {
@@ -1026,6 +1167,151 @@
                     ctx.stroke();
                     ctx.setLineDash([]);
                 }
+
+                // シミュレーション詳細を非表示
+                document.getElementById('simulationDetails').style.display = 'none';
+                if (autoStepInterval) {
+                    clearInterval(autoStepInterval);
+                    autoStepInterval = null;
+                }
+            }
+
+            updateSimulationDisplay() {
+                const stepsContainer = document.getElementById('simulationSteps');
+                const currentStepInfo = document.getElementById('currentStepInfo');
+                
+                if (!this.detailedSteps) return;
+                
+                stepsContainer.innerHTML = '';
+                
+                this.detailedSteps.forEach((stepData, index) => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = `simulation-step ${index === currentSimulationStep ? 'active' : ''}`;
+                    
+                    let stepHTML = `
+                        <div class="step-title">${stepData.title}</div>
+                        <div style="margin-bottom: 10px; color: #6b7280;">${stepData.description}</div>
+                    `;
+                    
+                    // 入力回路の状態を表示
+                    const inputGates = Array.from(stepData.gateStates.entries()).filter(([id, state]) => state.type === 'INPUT');
+                    if (inputGates.length > 0) {
+                        stepHTML += '<div style="margin-bottom: 10px;"><strong>入力値:</strong><br>';
+                        inputGates.forEach(([id, state]) => {
+                            stepHTML += `
+                                <div class="signal-flow">
+                                    <span>INPUT-${id}:</span>
+                                    <div class="signal-value ${state.outputValue ? 'signal-high' : 'signal-low'}">${state.outputValue}</div>
+                                </div>
+                            `;
+                        });
+                        stepHTML += '</div>';
+                    }
+                    
+                    // 接続の信号状態を表示
+                    if (stepData.connectionStates.length > 0) {
+                        stepHTML += '<div style="margin-bottom: 10px;"><strong>信号の流れ:</strong><br>';
+                        stepData.connectionStates.forEach((connState) => {
+                            stepHTML += `
+                                <div class="signal-flow">
+                                    <span>${connState.fromType}-${connState.fromGateId}</span>
+                                    <div class="signal-value ${connState.signal ? 'signal-high' : 'signal-low'}">${connState.signal}</div>
+                                    <span class="signal-arrow">→</span>
+                                    <span>${connState.toType}-${connState.toGateId}</span>
+                                </div>
+                            `;
+                        });
+                        stepHTML += '</div>';
+                    }
+                    
+                    // 論理回路の計算を表示
+                    const logicGates = Array.from(stepData.gateStates.entries()).filter(([id, state]) => 
+                        ['AND', 'OR', 'NOT'].includes(state.type)
+                    );
+                    if (logicGates.length > 0) {
+                        stepHTML += '<div style="margin-bottom: 10px;"><strong>論理演算:</strong><br>';
+                        logicGates.forEach(([id, state]) => {
+                            let calculation = '';
+                            switch(state.type) {
+                                case 'AND':
+                                    calculation = `${state.inputValues.join(' ∧ ')} = ${state.outputValue}`;
+                                    break;
+                                case 'OR':
+                                    calculation = `${state.inputValues.join(' ∨ ')} = ${state.outputValue}`;
+                                    break;
+                                case 'NOT':
+                                    calculation = `¬${state.inputValues[0]} = ${state.outputValue}`;
+                                    break;
+                            }
+                            stepHTML += `
+                                <div class="gate-calculation">
+                                    ${state.type}-${id}: ${calculation}
+                                </div>
+                            `;
+                        });
+                        stepHTML += '</div>';
+                    }
+                    
+                    // 出力回路の状態を表示
+                    const outputGates = Array.from(stepData.gateStates.entries()).filter(([id, state]) => state.type === 'OUTPUT');
+                    if (outputGates.length > 0) {
+                        stepHTML += '<div style="margin-bottom: 10px;"><strong>出力値:</strong><br>';
+                        outputGates.forEach(([id, state]) => {
+                            stepHTML += `
+                                <div class="signal-flow">
+                                    <span>OUTPUT-${id}:</span>
+                                    <div class="signal-value ${state.outputValue ? 'signal-high' : 'signal-low'}">${state.outputValue}</div>
+                                </div>
+                            `;
+                        });
+                        stepHTML += '</div>';
+                    }
+                    
+                    stepDiv.innerHTML = stepHTML;
+                    
+                    // クリックで該当ステップに移動
+                    stepDiv.addEventListener('click', () => {
+                        currentSimulationStep = index;
+                        this.updateSimulationDisplay();
+                        this.highlightCurrentStep();
+                    });
+                    
+                    stepsContainer.appendChild(stepDiv);
+                });
+                
+                // 現在のステップ情報を更新
+                if (this.detailedSteps[currentSimulationStep]) {
+                    currentStepInfo.textContent = `ステップ ${currentSimulationStep}: ${this.detailedSteps[currentSimulationStep].title}`;
+                }
+                
+                // ボタンの状態を更新
+                document.getElementById('stepForward').disabled = currentSimulationStep >= this.detailedSteps.length - 1;
+                document.getElementById('stepBackward').disabled = currentSimulationStep <= 0;
+            }
+            
+            highlightCurrentStep() {
+                // キャンバス上で現在のステップの状態をハイライト
+                if (this.detailedSteps && this.detailedSteps[currentSimulationStep]) {
+                    const stepData = this.detailedSteps[currentSimulationStep];
+                    
+                    // 回路の状態を一時的に更新
+                    for(let [id, state] of stepData.gateStates) {
+                        const gate = this.gates.get(id);
+                        if (gate) {
+                            gate.inputValues = [...state.inputValues];
+                            gate.outputValue = state.outputValue;
+                        }
+                    }
+                    
+                    // 接続の状態を一時的に更新
+                    stepData.connectionStates.forEach((connState, index) => {
+                        if (this.connections[index]) {
+                            this.connections[index].signal = connState.signal;
+                        }
+                    });
+                    
+                    draw();
+                }
             }
         }
 
@@ -1038,6 +1324,8 @@
         let draggedGate = null;
         let dragOffset = {x: 0, y: 0};
         let deleteMode = false;
+        let autoStepInterval = null;
+        let currentSimulationStep = 0;
 
         // テンプレート回路のデータ
         const circuitTemplates = {
@@ -1253,6 +1541,7 @@
             simulator.simulate();
             document.getElementById('stepForward').disabled = false;
             document.getElementById('stepBackward').disabled = false;
+            document.getElementById('autoStep').disabled = false;
         });
 
         document.getElementById('stepForward').addEventListener('click', () => {
@@ -1270,6 +1559,52 @@
             document.getElementById('stepForward').disabled = true;
             document.getElementById('stepBackward').disabled = true;
             draw();
+        });
+
+        // 詳細シミュレーション用のイベントリスナー
+        document.getElementById('stepForward').addEventListener('click', () => {
+            if (simulator.detailedSteps && currentSimulationStep < simulator.detailedSteps.length - 1) {
+                currentSimulationStep++;
+                simulator.updateSimulationDisplay();
+                simulator.highlightCurrentStep();
+            }
+        });
+
+        document.getElementById('stepBackward').addEventListener('click', () => {
+            if (simulator.detailedSteps && currentSimulationStep > 0) {
+                currentSimulationStep--;
+                simulator.updateSimulationDisplay();
+                simulator.highlightCurrentStep();
+            }
+        });
+
+        document.getElementById('autoStep').addEventListener('click', () => {
+            if (autoStepInterval) return;
+            
+            autoStepInterval = setInterval(() => {
+                if (simulator.detailedSteps && currentSimulationStep < simulator.detailedSteps.length - 1) {
+                    currentSimulationStep++;
+                    simulator.updateSimulationDisplay();
+                    simulator.highlightCurrentStep();
+                } else {
+                    clearInterval(autoStepInterval);
+                    autoStepInterval = null;
+                    document.getElementById('autoStep').disabled = false;
+                    document.getElementById('pauseAuto').disabled = true;
+                }
+            }, 1500);
+            
+            document.getElementById('autoStep').disabled = true;
+            document.getElementById('pauseAuto').disabled = false;
+        });
+
+        document.getElementById('pauseAuto').addEventListener('click', () => {
+            if (autoStepInterval) {
+                clearInterval(autoStepInterval);
+                autoStepInterval = null;
+                document.getElementById('autoStep').disabled = false;
+                document.getElementById('pauseAuto').disabled = true;
+            }
         });
 
         // 削除モードのイベントリスナー
