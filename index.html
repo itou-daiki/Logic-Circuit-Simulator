@@ -1382,6 +1382,8 @@
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
+            console.log('マウスダウン:', {x, y, deleteMode, isConnecting: simulator.isConnecting, selectedGateType: simulator.selectedGateType});
+
             if (deleteMode) {
                 handleDelete(x, y);
                 return;
@@ -1393,21 +1395,28 @@
             }
 
             // 回路をクリックしたかチェック
+            let gateClicked = false;
             for (let gate of simulator.gates.values()) {
                 if (gate.containsPoint(x, y)) {
+                    gateClicked = true;
+                    console.log('回路がクリックされました:', gate.type, gate.id);
+                    
                     if (simulator.selectedGateType) {
-                        // 配置モードの場合は何もしない
-                        return;
+                        // 配置モードの場合は何もしない（新しい回路を配置するため）
+                        console.log('配置モードのため、ドラッグをスキップ');
+                        break;
                     } else {
                         // ドラッグ開始
                         isDragging = true;
                         draggedGate = gate;
                         dragOffset.x = x - gate.x;
                         dragOffset.y = y - gate.y;
+                        console.log('ドラッグ開始:', gate.type, gate.id);
                         
                         // 入力回路の値変更
                         if (gate.type === 'INPUT') {
                             gate.outputValue = gate.outputValue === 1 ? 0 : 1;
+                            console.log('入力値変更:', gate.outputValue);
                             // 即座に回路を更新
                             simulator.updateCircuit();
                             draw();
@@ -1418,7 +1427,8 @@
             }
 
             // 回路配置
-            if (simulator.selectedGateType) {
+            if (simulator.selectedGateType && !gateClicked) {
+                console.log('新しい回路を配置:', simulator.selectedGateType);
                 simulator.addGate(simulator.selectedGateType, x - 40, y - 30);
                 draw();
             }
@@ -1592,7 +1602,7 @@
                 indicator.style.background = '#dcfce7';
                 indicator.style.borderColor = '#22c55e';
             } else {
-                indicator.textContent = 'ドラッグモード: 回路をドラッグで移動、クリックで配置';
+                indicator.textContent = 'ドラッグモード: 回路をドラッグで移動、入力回路をクリックで値変更';
                 indicator.style.background = '#eff6ff';
                 indicator.style.borderColor = '#3b82f6';
             }
