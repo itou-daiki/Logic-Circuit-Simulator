@@ -871,22 +871,29 @@
                 this.step = 0;
                 this.history = [];
 
+                // 初期状態をリセット
+                this.reset();
+                
                 // 状態を保存
                 this.saveState();
 
-                // シミュレーション実行
-                this.executeStep();
+                // シミュレーション実行（複数ステップで安定化）
+                for(let i = 0; i < 5; i++) {
+                    this.executeStep();
+                }
+                
+                draw();
             }
 
             executeStep() {
-                // 全ての回路を計算
-                for(let gate of this.gates.values()) {
-                    gate.calculate();
-                }
-
-                // 接続を通じて信号を伝播
+                // まず接続を通じて信号を伝播
                 for(let connection of this.connections) {
                     connection.updateSignal();
+                }
+
+                // 次に全ての回路を計算
+                for(let gate of this.gates.values()) {
+                    gate.calculate();
                 }
 
                 this.step++;
@@ -953,7 +960,7 @@
                 this.step = 0;
                 this.history = [];
 
-                // 全ての回路をリセット
+                // 全ての回路をリセット（INPUTは除く）
                 for(let gate of this.gates.values()) {
                     if(gate.type !== 'INPUT') {
                         gate.inputValues.fill(0);
@@ -965,11 +972,34 @@
                 for(let connection of this.connections) {
                     connection.signal = 0;
                 }
+
+                // 入力値を各回路に反映
+                for(let connection of this.connections) {
+                    if(connection.fromGate.type === 'INPUT') {
+                        connection.signal = connection.fromGate.outputValue;
+                        connection.toGate.inputValues[connection.toPin] = connection.signal;
+                    }
+                }
             }
 
             updateCounts() {
                 document.getElementById('gateCount').textContent = this.gates.size;
                 document.getElementById('connectionCount').textContent = this.connections.length;
+            }
+
+            updateCircuit() {
+                // リアルタイムで回路を更新（入力変更時に使用）
+                for(let i = 0; i < 3; i++) {
+                    // 接続を通じて信号を伝播
+                    for(let connection of this.connections) {
+                        connection.updateSignal();
+                    }
+
+                    // 全ての回路を計算
+                    for(let gate of this.gates.values()) {
+                        gate.calculate();
+                    }
+                }
             }
 
             draw(ctx) {
@@ -1356,6 +1386,8 @@
                         // 入力回路の値変更
                         if (gate.type === 'INPUT') {
                             gate.outputValue = gate.outputValue === 1 ? 0 : 1;
+                            // 即座に回路を更新
+                            simulator.updateCircuit();
                             draw();
                         }
                         return;
@@ -1508,6 +1540,8 @@
                     if(gate.type === 'INPUT') {
                         // 入力値を切り替え
                         gate.outputValue = gate.outputValue === 1 ? 0 : 1;
+                        // 即座に回路を更新
+                        simulator.updateCircuit();
                         draw();
                     }
                     break;
