@@ -393,6 +393,19 @@
             <canvas id="canvas" width="1000" height="600"></canvas>
         </div>
 
+        <div class="status-bar">
+            <div>
+                <span>配置済み回路: <span id="gateCount">0</span>個</span>
+                <span style="margin-left: 20px;">接続: <span id="connectionCount">0</span>本</span>
+            </div>
+            <div class="simulation-controls">
+                <button class="sim-button start-sim" id="simulate">シミュレート開始</button>
+                <button class="sim-button step-button" id="stepForward" disabled>進む ▶</button>
+                <button class="sim-button step-button" id="stepBackward" disabled>◀ 戻る</button>
+                <button class="sim-button reset-button" id="resetSim">リセット</button>
+            </div>
+        </div>
+
         <div class="instructions">
             <h3>📚 使い方</h3>
             <ol>
@@ -534,20 +547,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-
-        <div class="status-bar">
-            <div>
-                <span>配置済み回路: <span id="gateCount">0</span>個</span>
-                <span style="margin-left: 20px;">接続: <span id="connectionCount">0</span>本</span>
-            </div>
-            <div class="simulation-controls">
-                <button class="sim-button start-sim" id="simulate">シミュレート開始</button>
-                <button class="sim-button step-button" id="stepForward" disabled>進む ▶</button>
-                <button class="sim-button step-button" id="stepBackward" disabled>◀ 戻る</button>
-                <button class="sim-button reset-button" id="resetSim">リセット</button>
             </div>
         </div>
     </div>
