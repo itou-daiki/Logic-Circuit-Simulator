@@ -126,6 +126,24 @@
             cursor: crosshair;
         }
 
+        .instructions {
+            margin: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border-radius: 10px;
+            border-left: 5px solid #10b981;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            color: #047857;
+        }
+
+        .instructions ol {
+            color: #374151;
+            line-height: 1.6;
+        }
+
         .status-bar {
             padding: 15px 20px;
             background: #1f2937;
@@ -709,6 +727,16 @@
             // 全ての回路選択を解除
             document.querySelectorAll('.gate-button').forEach(b => b.classList.remove('active'));
             
+            // 接続ボタンの状態を更新
+            const connectBtn = document.getElementById('connectMode');
+            if(simulator.isConnecting) {
+                connectBtn.style.background = 'linear-gradient(135deg, #dc2626, #b91c1c)';
+                connectBtn.textContent = '接続モード終了';
+            } else {
+                connectBtn.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+                connectBtn.textContent = '接続モード';
+            }
+            
             updateModeIndicator();
         });
 
@@ -783,7 +811,12 @@
                 }
             }
 
-            if(!clickedPin) return;
+            if(!clickedPin) {
+                console.log('ピンがクリックされませんでした');
+                return;
+            }
+
+            console.log('クリックされたピン:', clickedPin.type, 'ゲート:', clickedGate.type);
 
             if(!simulator.connectionStart) {
                 // 接続開始（出力ピンのみ）
@@ -793,6 +826,10 @@
                         pin: clickedPin,
                         pinIndex: clickedPin.index
                     };
+                    console.log('接続開始:', clickedGate.type, 'の出力ピン');
+                    updateModeIndicator();
+                } else {
+                    console.log('出力ピンを最初にクリックしてください');
                 }
             } else {
                 // 接続完了（入力ピンのみ）
@@ -804,12 +841,19 @@
                         clickedPin.index
                     );
                     
-                    if(!success) {
+                    if(success) {
+                        console.log('接続が完了しました');
+                    } else {
                         alert('このピンは既に接続されています。');
                     }
+                } else if(clickedPin.type !== 'input') {
+                    console.log('入力ピンをクリックしてください');
+                } else {
+                    console.log('同じゲートには接続できません');
                 }
                 
                 simulator.connectionStart = null;
+                updateModeIndicator();
                 draw();
             }
         }
@@ -830,9 +874,15 @@
         function updateModeIndicator() {
             const indicator = document.getElementById('modeIndicator');
             if(simulator.isConnecting) {
-                indicator.textContent = '接続モード: 出力→入力の順でピンをクリック';
-                indicator.style.background = '#fef3c7';
-                indicator.style.borderColor = '#fbbf24';
+                if(simulator.connectionStart) {
+                    indicator.textContent = '接続モード: 入力ピン（左側の●）をクリック';
+                    indicator.style.background = '#fef3c7';
+                    indicator.style.borderColor = '#f59e0b';
+                } else {
+                    indicator.textContent = '接続モード: 出力ピン（右側の●）をクリック';
+                    indicator.style.background = '#fef3c7';
+                    indicator.style.borderColor = '#fbbf24';
+                }
             } else if(simulator.selectedGateType) {
                 indicator.textContent = `配置モード: ${simulator.selectedGateType}回路`;
                 indicator.style.background = '#dcfce7';
