@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ロジックサーキットシミュレータ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .component-palette {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .component-btn {
+            padding: 12px;
+            background: #34495e;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .component-btn:hover {
+            background: #3498db;
+            transform: translateY(-2px);
+        }
+
+        .component-btn.active {
+            background: #e74c3c;
+        }
+
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            height: 60px;
+            background: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            gap: 15px;
+        }
+
+        .toolbar button {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toolbar button:hover {
+            background: #2980b9;
+        }
+
+        .toolbar button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            cursor: default;
+            background: #ecf0f1;
+            background-image: 
+                radial-gradient(circle, #bdc3c7 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .status-bar {
+            height: 30px;
+            background: #34495e;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 12px;
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 200px;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .connection-preview {
+            position: absolute;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>コンポーネント</h2>
+            <div class="component-palette">
+                <button class="component-btn" data-type="INPUT">入力 (INPUT)</button>
+                <button class="component-btn" data-type="AND">AND回路</button>
+                <button class="component-btn" data-type="OR">OR回路</button>
+                <button class="component-btn" data-type="NOT">NOT回路</button>
+                <button class="component-btn" data-type="OUTPUT">出力 (OUTPUT)</button>
+            </div>
+        </div>
+
+        <div class="main-area">
+            <div class="toolbar">
+                <button id="simulate-btn">シミュレート</button>
+                <button id="step-forward-btn" disabled>進む</button>
+                <button id="step-backward-btn" disabled>戻る</button>
+                <button id="reset-btn">リセット</button>
+                <button id="clear-btn">クリア</button>
+                <span style="margin-left: auto;">ステップ: <span id="step-counter">0</span></span>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="circuit-canvas"></canvas>
+                <canvas id="connection-preview" class="connection-preview"></canvas>
+                
+                <div class="info-panel">
+                    <h3>使い方</h3>
+                    <p>1. 左のパレットから回路を選択</p>
+                    <p>2. キャンバスにクリックして配置</p>
+                    <p>3. 出力端子から入力端子へドラッグして接続</p>
+                    <p>4. シミュレートボタンで実行</p>
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <span id="status-text">回路を配置してください</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LogicGate {
+            constructor(type, x, y) {
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.width = 80;
+                this.height = 60;
+                this.inputs = [];
+                this.outputs = [];
+                this.value = null;
+                this.selected = false;
+                this.dragging = false;
+                this.dragOffsetX = 0;
+                this.dragOffsetY = 0;
+                
+                this.setupPins();
+            }
+
+            setupPins() {
+                this.inputs = [];
+                this.outputs = [];
+
+                switch(this.type) {
+                    case 'INPUT':
+                        this.outputs.push({ x: this.x + this.width, y: this.y + this.height/2, value: 0 });
+                        this.value = 0;
+                        break;
+                    case 'OUTPUT':
+                        this.inputs.push({ x: this.x, y: this.y + this.height/2, value: null });
+                        break;
+                    case 'NOT':
+                        this.inputs.push({ x: this.x, y: this.y + this.height/2, value: null });
+                        this.outputs.push({ x: this.x + this.width, y: this.y + this.height/2, value: null });
+                        break;
+                    case 'AND':
+                    case 'OR':
+                        this.inputs.push({ x: this.x, y: this.y + this.height/3, value: null });
+                        this.inputs.push({ x: this.x, y: this.y + 2*this.height/3, value: null });
+                        this.outputs.push({ x: this.x + this.width, y: this.y + this.height/2, value: null });
+                        break;
+                }
+            }
+
+            updatePinPositions() {
+                this.inputs.forEach((pin, index) => {
+                    switch(this.type) {
+                        case 'OUTPUT':
+                            pin.x = this.x;
+                            pin.y = this.y + this.height/2;
+                            break;
+                        case 'NOT':
+                            pin.x = this.x;
+                            pin.y = this.y + this.height/2;
+                            break;
+                        case 'AND':
+                        case 'OR':
+                            pin.x = this.x;
+                            pin.y = this.y + (index + 1) * this.height/3;
+                            break;
+                    }
+                });
+
+                this.outputs.forEach(pin => {
+                    pin.x = this.x + this.width;
+                    pin.y = this.y + this.height/2;
+                });
+            }
+
+            calculate() {
+                if (this.type === 'INPUT') {
+                    this.outputs[0].value = this.value;
+                    return;
+                }
+
+                if (this.type === 'OUTPUT') {
+                    this.value = this.inputs[0].value;
+                    return;
+                }
+
+                switch(this.type) {
+                    case 'NOT':
+                        this.outputs[0].value = this.inputs[0].value === null ? null : (this.inputs[0].value === 0 ? 1 : 0);
+                        break;
+                    case 'AND':
+                        if (this.inputs[0].value === null || this.inputs[1].value === null) {
+                            this.outputs[0].value = null;
+                        } else {
+                            this.outputs[0].value = this.inputs[0].value && this.inputs[1].value ? 1 : 0;
+                        }
+                        break;
+                    case 'OR':
+                        if (this.inputs[0].value === null || this.inputs[1].value === null) {
+                            this.outputs[0].value = null;
+                        } else {
+                            this.outputs[0].value = this.inputs[0].value || this.inputs[1].value ? 1 : 0;
+                        }
+                        break;
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                
+                if (this.selected) {
+                    ctx.strokeStyle = '#e74c3c';
+                    ctx.lineWidth = 3;
+                } else {
+                    ctx.strokeStyle = '#2c3e50';
+                    ctx.lineWidth = 2;
+                }
+
+                ctx.fillStyle = this.getBackgroundColor();
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const text = this.getDisplayText();
+                ctx.fillText(text, this.x + this.width/2, this.y + this.height/2);
+
+                this.drawPins(ctx);
+                
+                ctx.restore();
+            }
+
+            getBackgroundColor() {
+                if (this.type === 'INPUT') {
+                    return this.value === 1 ? '#e74c3c' : '#ecf0f1';
+                }
+                if (this.type === 'OUTPUT') {
+                    return this.value === 1 ? '#e74c3c' : this.value === 0 ? '#95a5a6' : '#ecf0f1';
+                }
+                return '#fff';
+            }
+
+            getDisplayText() {
+                switch(this.type) {
+                    case 'INPUT': return this.value.toString();
+                    case 'OUTPUT': return this.value === null ? '?' : this.value.toString();
+                    default: return this.type;
+                }
+            }
+
+            drawPins(ctx) {
+                ctx.fillStyle = '#34495e';
+                
+                this.inputs.forEach(pin => {
+                    ctx.beginPath();
+                    ctx.arc(pin.x, pin.y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+
+                this.outputs.forEach(pin => {
+                    ctx.beginPath();
+                    ctx.arc(pin.x, pin.y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+            }
+
+            containsPoint(x, y) {
+                return x >= this.x && x <= this.x + this.width && 
+                       y >= this.y && y <= this.y + this.height;
+            }
+
+            getPinAt(x, y) {
+                const pinRadius = 8;
+                
+                for (let pin of this.inputs) {
+                    if (Math.abs(x - pin.x) <= pinRadius && Math.abs(y - pin.y) <= pinRadius) {
+                        return { pin, type: 'input' };
+                    }
+                }
+                
+                for (let pin of this.outputs) {
+                    if (Math.abs(x - pin.x) <= pinRadius && Math.abs(y - pin.y) <= pinRadius) {
+                        return { pin, type: 'output' };
+                    }
+                }
+                
+                return null;
+            }
+        }
+
+        class Connection {
+            constructor(fromGate, fromPin, toGate, toPin) {
+                this.from = { gate: fromGate, pin: fromPin };
+                this.to = { gate: toGate, pin: toPin };
+                this.signal = 0;
+            }
+
+            draw(ctx) {
+                const fromX = this.from.pin.x;
+                const fromY = this.from.pin.y;
+                const toX = this.to.pin.x;
+                const toY = this.to.pin.y;
+
+                ctx.save();
+                ctx.strokeStyle = this.signal === 1 ? '#e74c3c' : '#7f8c8d';
+                ctx.lineWidth = 3;
+                
+                ctx.beginPath();
+                ctx.moveTo(fromX, fromY);
+                
+                const controlX1 = fromX + (toX - fromX) * 0.5;
+                const controlY1 = fromY;
+                const controlX2 = fromX + (toX - fromX) * 0.5;
+                const controlY2 = toY;
+                
+                ctx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, toX, toY);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+
+            propagateSignal() {
+                this.signal = this.from.pin.value || 0;
+                this.to.pin.value = this.signal;
+            }
+        }
+
+        class Simulator {
+            constructor() {
+                this.gates = [];
+                this.connections = [];
+                this.currentStep = 0;
+                this.history = [];
+                this.isRunning = false;
+            }
+
+            addGate(gate) {
+                this.gates.push(gate);
+            }
+
+            addConnection(connection) {
+                this.connections.push(connection);
+            }
+
+            removeGate(gate) {
+                this.gates = this.gates.filter(g => g !== gate);
+                this.connections = this.connections.filter(c => 
+                    c.from.gate !== gate && c.to.gate !== gate
+                );
+            }
+
+            removeConnection(connection) {
+                this.connections = this.connections.filter(c => c !== connection);
+            }
+
+            simulate() {
+                this.isRunning = true;
+                this.currentStep = 0;
+                this.history = [];
+                
+                this.saveState();
+                
+                for (let step = 0; step < 10; step++) {
+                    this.gates.forEach(gate => gate.calculate());
+                    this.connections.forEach(conn => conn.propagateSignal());
+                    this.saveState();
+                }
+            }
+
+            saveState() {
+                const state = {
+                    gates: this.gates.map(gate => ({
+                        inputs: gate.inputs.map(pin => ({ value: pin.value })),
+                        outputs: gate.outputs.map(pin => ({ value: pin.value })),
+                        value: gate.value
+                    })),
+                    connections: this.connections.map(conn => ({ signal: conn.signal }))
+                };
+                this.history.push(state);
+            }
+
+            stepForward() {
+                if (this.currentStep < this.history.length - 1) {
+                    this.currentStep++;
+                    this.restoreState(this.currentStep);
+                    return true;
+                }
+                return false;
+            }
+
+            stepBackward() {
+                if (this.currentStep > 0) {
+                    this.currentStep--;
+                    this.restoreState(this.currentStep);
+                    return true;
+                }
+                return false;
+            }
+
+            restoreState(step) {
+                const state = this.history[step];
+                
+                this.gates.forEach((gate, i) => {
+                    if (state.gates[i]) {
+                        gate.inputs.forEach((pin, j) => {
+                            if (state.gates[i].inputs[j]) {
+                                pin.value = state.gates[i].inputs[j].value;
+                            }
+                        });
+                        gate.outputs.forEach((pin, j) => {
+                            if (state.gates[i].outputs[j]) {
+                                pin.value = state.gates[i].outputs[j].value;
+                            }
+                        });
+                        gate.value = state.gates[i].value;
+                    }
+                });
+
+                this.connections.forEach((conn, i) => {
+                    if (state.connections[i]) {
+                        conn.signal = state.connections[i].signal;
+                    }
+                });
+            }
+
+            reset() {
+                this.isRunning = false;
+                this.currentStep = 0;
+                this.history = [];
+                
+                this.gates.forEach(gate => {
+                    if (gate.type !== 'INPUT') {
+                        gate.inputs.forEach(pin => pin.value = null);
+                        gate.outputs.forEach(pin => pin.value = null);
+                        if (gate.type !== 'INPUT') gate.value = null;
+                    }
+                });
+                
+                this.connections.forEach(conn => conn.signal = 0);
+            }
+
+            clear() {
+                this.gates = [];
+                this.connections = [];
+                this.reset();
+            }
+        }
+
+        class CircuitEditor {
+            constructor() {
+                this.canvas = document.getElementById('circuit-canvas');
+                this.previewCanvas = document.getElementById('connection-preview');
+                this.ctx = this.canvas.getContext('2d');
+                this.previewCtx = this.previewCanvas.getContext('2d');
+                
+                this.simulator = new Simulator();
+                this.selectedComponentType = null;
+                this.selectedGate = null;
+                this.isDragging = false;
+                this.isConnecting = false;
+                this.connectionStart = null;
+                this.mouseX = 0;
+                this.mouseY = 0;
+
+                this.setupCanvas();
+                this.setupEventListeners();
+                this.setupUI();
+                
+                this.animate();
+            }
+
+            setupCanvas() {
+                const container = this.canvas.parentElement;
+                const resizeCanvas = () => {
+                    this.canvas.width = container.clientWidth;
+                    this.canvas.height = container.clientHeight;
+                    this.previewCanvas.width = container.clientWidth;
+                    this.previewCanvas.height = container.clientHeight;
+                };
+                
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+            }
+
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.onMouseUp.bind(this));
+                this.canvas.addEventListener('dblclick', this.onDoubleClick.bind(this));
+            }
+
+            setupUI() {
+                document.querySelectorAll('.component-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.component-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.selectedComponentType = e.target.dataset.type;
+                        this.updateStatus(`${e.target.textContent}を選択しました。キャンバスをクリックして配置してください。`);
+                    });
+                });
+
+                document.getElementById('simulate-btn').addEventListener('click', () => {
+                    this.simulator.simulate();
+                    this.updateStatus('シミュレーション開始');
+                    this.updateButtons();
+                    document.getElementById('step-counter').textContent = this.simulator.currentStep;
+                });
+
+                document.getElementById('step-forward-btn').addEventListener('click', () => {
+                    if (this.simulator.stepForward()) {
+                        document.getElementById('step-counter').textContent = this.simulator.currentStep;
+                        this.updateStatus('次のステップに進みました');
+                    }
+                });
+
+                document.getElementById('step-backward-btn').addEventListener('click', () => {
+                    if (this.simulator.stepBackward()) {
+                        document.getElementById('step-counter').textContent = this.simulator.currentStep;
+                        this.updateStatus('前のステップに戻りました');
+                    }
+                });
+
+                document.getElementById('reset-btn').addEventListener('click', () => {
+                    this.simulator.reset();
+                    this.updateStatus('回路をリセットしました');
+                    this.updateButtons();
+                    document.getElementById('step-counter').textContent = '0';
+                });
+
+                document.getElementById('clear-btn').addEventListener('click', () => {
+                    this.simulator.clear();
+                    this.updateStatus('すべてクリアしました');
+                    this.updateButtons();
+                    document.getElementById('step-counter').textContent = '0';
+                });
+            }
+
+            onMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const clickedGate = this.simulator.gates.find(gate => gate.containsPoint(x, y));
+                
+                if (clickedGate) {
+                    const pinInfo = clickedGate.getPinAt(x, y);
+                    
+                    if (pinInfo && pinInfo.type === 'output') {
+                        this.isConnecting = true;
+                        this.connectionStart = { gate: clickedGate, pin: pinInfo.pin };
+                        this.updateStatus('接続先の入力端子をクリックしてください');
+                        return;
+                    }
+
+                    this.selectedGate = clickedGate;
+                    this.isDragging = true;
+                    clickedGate.dragging = true;
+                    clickedGate.dragOffsetX = x - clickedGate.x;
+                    clickedGate.dragOffsetY = y - clickedGate.y;
+                    
+                    this.simulator.gates.forEach(gate => gate.selected = false);
+                    clickedGate.selected = true;
+                    
+                } else if (this.selectedComponentType && !this.isConnecting) {
+                    const newGate = new LogicGate(this.selectedComponentType, x - 40, y - 30);
+                    this.simulator.addGate(newGate);
+                    this.updateStatus(`${this.selectedComponentType}を配置しました`);
+                }
+            }
+
+            onMouseMove(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                this.mouseX = e.clientX - rect.left;
+                this.mouseY = e.clientY - rect.top;
+
+                if (this.isDragging && this.selectedGate) {
+                    this.selectedGate.x = this.mouseX - this.selectedGate.dragOffsetX;
+                    this.selectedGate.y = this.mouseY - this.selectedGate.dragOffsetY;
+                    this.selectedGate.updatePinPositions();
+                }
+            }
+
+            onMouseUp(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (this.isConnecting && this.connectionStart) {
+                    const targetGate = this.simulator.gates.find(gate => gate.containsPoint(x, y));
+                    
+                    if (targetGate && targetGate !== this.connectionStart.gate) {
+                        const pinInfo = targetGate.getPinAt(x, y);
+                        
+                        if (pinInfo && pinInfo.type === 'input') {
+                            const connection = new Connection(
+                                this.connectionStart.gate,
+                                this.connectionStart.pin,
+                                targetGate,
+                                pinInfo.pin
+                            );
+                            this.simulator.addConnection(connection);
+                            this.updateStatus('接続を作成しました');
+                        }
+                    }
+                    
+                    this.isConnecting = false;
+                    this.connectionStart = null;
+                }
+
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    if (this.selectedGate) {
+                        this.selectedGate.dragging = false;
+                    }
+                }
+            }
+
+            onDoubleClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const clickedGate = this.simulator.gates.find(gate => gate.containsPoint(x, y));
+                
+                if (clickedGate && clickedGate.type === 'INPUT') {
+                    clickedGate.value = clickedGate.value === 0 ? 1 : 0;
+                    this.updateStatus(`入力値を${clickedGate.value}に変更しました`);
+                }
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.previewCtx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+
+                this.simulator.connections.forEach(connection => connection.draw(this.ctx));
+                this.simulator.gates.forEach(gate => gate.draw(this.ctx));
+
+                if (this.isConnecting && this.connectionStart) {
+                    this.previewCtx.strokeStyle = '#3498db';
+                    this.previewCtx.lineWidth = 2;
+                    this.previewCtx.setLineDash([5, 5]);
+                    this.previewCtx.beginPath();
+                    this.previewCtx.moveTo(this.connectionStart.pin.x, this.connectionStart.pin.y);
+                    this.previewCtx.lineTo(this.mouseX, this.mouseY);
+                    this.previewCtx.stroke();
+                    this.previewCtx.setLineDash([]);
+                }
+
+                requestAnimationFrame(() => this.animate());
+            }
+
+            updateStatus(message) {
+                document.getElementById('status-text').textContent = message;
+            }
+
+            updateButtons() {
+                const hasSimulation = this.simulator.history.length > 0;
+                document.getElementById('step-forward-btn').disabled = !hasSimulation;
+                document.getElementById('step-backward-btn').disabled = !hasSimulation;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new CircuitEditor();
+        });
+    </script>
+</body>
+</html>
