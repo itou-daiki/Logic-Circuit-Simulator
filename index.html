@@ -436,9 +436,15 @@
 
                 <div class="tool-group">
                     <label>操作:</label>
+                    <button class="tool-button control-button" id="dragMode">ドラッグモード</button>
                     <button class="tool-button control-button" id="connectMode">接続モード</button>
                     <button class="tool-button control-button" id="deleteMode">削除モード</button>
                     <button class="tool-button control-button" id="clearAll">全クリア</button>
+                </div>
+
+                <div class="tool-group">
+                    <label>表示:</label>
+                    <button class="tool-button control-button" id="toggleSignalDisplay">信号値表示</button>
                 </div>
 
                 <div class="tool-group">
@@ -844,6 +850,25 @@
                 ctx.bezierCurveTo(cpx1, fromPos.y, cpx2, toPos.y, toPos.x, toPos.y);
                 ctx.stroke();
 
+                // 信号値の表示（オプション）
+                if(simulator.showSignalValues) {
+                    const midX = (fromPos.x + toPos.x) / 2;
+                    const midY = (fromPos.y + toPos.y) / 2;
+                    
+                    // 背景の円
+                    ctx.fillStyle = this.signal === 1 ? '#ef4444' : '#6b7280';
+                    ctx.beginPath();
+                    ctx.arc(midX, midY, 12, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // 信号値のテキスト
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.signal.toString(), midX, midY);
+                }
+
                 // 信号の流れを示すアニメーション（シミュレーション中）
                 if(simulator.isRunning && this.signal === 1) {
                     const t = (Date.now() % 1000) / 1000;
@@ -911,6 +936,7 @@
                 this.isRunning = false;
                 this.step = 0;
                 this.history = [];
+                this.showSignalValues = false;
             }
 
             addGate(type, x, y) {
@@ -1325,6 +1351,7 @@
         let draggedGate = null;
         let dragOffset = {x: 0, y: 0};
         let deleteMode = false;
+        let dragMode = true; // デフォルトはドラッグモード
         let autoStepInterval = null;
         let currentSimulationStep = 0;
 
@@ -1506,17 +1533,50 @@
                 button.classList.add('active');
                 simulator.selectedGateType = button.dataset.gate;
                 simulator.isConnecting = false;
+                dragMode = false;
+                deleteMode = false;
+                
+                // 全てのモードボタンを通常状態に戻す
+                resetModeButtons();
+                
                 updateModeIndicator();
             });
+        });
+
+        document.getElementById('dragMode').addEventListener('click', () => {
+            dragMode = true;
+            deleteMode = false;
+            simulator.isConnecting = false;
+            simulator.selectedGateType = null;
+            simulator.connectionStart = null;
+            
+            // 全ての回路選択を解除
+            document.querySelectorAll('.gate-button').forEach(b => b.classList.remove('active'));
+            
+            // 全てのモードボタンを通常状態に戻す
+            resetModeButtons();
+            
+            // ドラッグボタンを選択状態にする
+            const dragBtn = document.getElementById('dragMode');
+            dragBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            dragBtn.textContent = 'ドラッグモード: ON';
+            
+            canvas.style.cursor = 'default';
+            updateModeIndicator();
         });
 
         document.getElementById('connectMode').addEventListener('click', () => {
             simulator.isConnecting = !simulator.isConnecting;
             simulator.selectedGateType = null;
             simulator.connectionStart = null;
+            dragMode = false;
+            deleteMode = false;
             
             // 全ての回路選択を解除
             document.querySelectorAll('.gate-button').forEach(b => b.classList.remove('active'));
+            
+            // 全てのモードボタンを通常状態に戻す
+            resetModeButtons();
             
             // 接続ボタンの状態を更新
             const connectBtn = document.getElementById('connectMode');
@@ -1559,6 +1619,22 @@
             simulator.reset();
             document.getElementById('stepForward').disabled = true;
             document.getElementById('stepBackward').disabled = true;
+            draw();
+        });
+
+        // 信号値表示の切り替え
+        document.getElementById('toggleSignalDisplay').addEventListener('click', () => {
+            simulator.showSignalValues = !simulator.showSignalValues;
+            const button = document.getElementById('toggleSignalDisplay');
+            
+            if(simulator.showSignalValues) {
+                button.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                button.textContent = '信号値表示: ON';
+            } else {
+                button.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+                button.textContent = '信号値表示';
+            }
+            
             draw();
         });
 
@@ -1614,9 +1690,13 @@
             simulator.isConnecting = false;
             simulator.selectedGateType = null;
             simulator.connectionStart = null;
+            dragMode = false;
             
             // 全ての回路選択を解除
             document.querySelectorAll('.gate-button').forEach(b => b.classList.remove('active'));
+            
+            // 全てのモードボタンを通常状態に戻す
+            resetModeButtons();
             
             // 削除ボタンの状態を更新
             const deleteBtn = document.getElementById('deleteMode');
@@ -1917,6 +1997,16 @@
             }
         }
 
+        // モードボタンをリセットする関数
+        function resetModeButtons() {
+            document.getElementById('dragMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+            document.getElementById('dragMode').textContent = 'ドラッグモード';
+            document.getElementById('connectMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+            document.getElementById('connectMode').textContent = '接続モード';
+            document.getElementById('deleteMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+            document.getElementById('deleteMode').textContent = '削除モード';
+        }
+
         function updateModeIndicator() {
             const indicator = document.getElementById('modeIndicator');
             if(deleteMode) {
@@ -1937,6 +2027,10 @@
                 indicator.textContent = `配置モード: ${simulator.selectedGateType}回路`;
                 indicator.style.background = '#dcfce7';
                 indicator.style.borderColor = '#22c55e';
+            } else if(dragMode) {
+                indicator.textContent = 'ドラッグモード: 回路をドラッグで移動、入力回路をクリックで値変更';
+                indicator.style.background = '#eff6ff';
+                indicator.style.borderColor = '#3b82f6';
             } else {
                 indicator.textContent = 'ドラッグモード: 回路をドラッグで移動、入力回路をクリックで値変更';
                 indicator.style.background = '#eff6ff';
@@ -1949,6 +2043,9 @@
         }
 
         // 初期化
+        // ドラッグモードを初期状態で有効にする
+        document.getElementById('dragMode').style.background = 'linear-gradient(135deg, #10b981, #059669)';
+        document.getElementById('dragMode').textContent = 'ドラッグモード: ON';
         updateModeIndicator();
         draw();
 
@@ -1976,11 +2073,12 @@
                     simulator.isConnecting = false;
                     simulator.selectedGateType = null;
                     simulator.connectionStart = null;
+                    dragMode = true; // デフォルトはドラッグモード
                     document.querySelectorAll('.gate-button').forEach(b => b.classList.remove('active'));
-                    document.getElementById('deleteMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
-                    document.getElementById('deleteMode').textContent = '削除モード';
-                    document.getElementById('connectMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
-                    document.getElementById('connectMode').textContent = '接続モード';
+                    resetModeButtons();
+                    // ドラッグモードを有効状態に
+                    document.getElementById('dragMode').style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                    document.getElementById('dragMode').textContent = 'ドラッグモード: ON';
                     canvas.style.cursor = 'default';
                     updateModeIndicator();
                     break;
