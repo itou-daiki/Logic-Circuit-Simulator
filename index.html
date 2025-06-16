@@ -748,23 +748,27 @@
 
                 // 入力ピン
                 this.inputPins.forEach((pin, i) => {
+                    const isHovered = hoveredPin && hoveredGate === this && hoveredPin.type === 'input' && hoveredPin.index === i;
+                    
                     ctx.fillStyle = this.inputValues[i] === 1 ? '#ef4444' : '#6b7280';
                     ctx.beginPath();
-                    ctx.arc(pin.x, pin.y, 6, 0, 2 * Math.PI);
+                    ctx.arc(pin.x, pin.y, isHovered ? 8 : 6, 0, 2 * Math.PI);
                     ctx.fill();
-                    ctx.strokeStyle = '#374151';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = isHovered ? '#fbbf24' : '#374151';
+                    ctx.lineWidth = isHovered ? 3 : 2;
                     ctx.stroke();
                 });
 
                 // 出力ピン
-                this.outputPins.forEach(pin => {
+                this.outputPins.forEach((pin, i) => {
+                    const isHovered = hoveredPin && hoveredGate === this && hoveredPin.type === 'output' && hoveredPin.index === i;
+                    
                     ctx.fillStyle = this.outputValue === 1 ? '#ef4444' : '#6b7280';
                     ctx.beginPath();
-                    ctx.arc(pin.x, pin.y, 6, 0, 2 * Math.PI);
+                    ctx.arc(pin.x, pin.y, isHovered ? 8 : 6, 0, 2 * Math.PI);
                     ctx.fill();
-                    ctx.strokeStyle = '#374151';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = isHovered ? '#fbbf24' : '#374151';
+                    ctx.lineWidth = isHovered ? 3 : 2;
                     ctx.stroke();
                 });
 
@@ -1354,6 +1358,10 @@
         let dragMode = true; // デフォルトはドラッグモード
         let autoStepInterval = null;
         let currentSimulationStep = 0;
+        let hoveredPin = null;
+        let hoveredGate = null;
+        let mouseDownTime = 0;
+        let isDragHold = false;
 
         // テンプレート回路のデータ
         const circuitTemplates = {
@@ -1797,11 +1805,20 @@
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
+            mouseDownTime = Date.now();
+            isDragHold = false;
 
             console.log('マウスダウン:', {x, y, deleteMode, isConnecting: simulator.isConnecting, selectedGateType: simulator.selectedGateType});
 
             if (deleteMode) {
                 handleDelete(x, y);
+                return;
+            }
+
+            // ピンがクリックされた場合は即座に接続モードに
+            if (hoveredPin && hoveredGate) {
+                activateConnectionMode();
+                handleConnectionClick(x, y);
                 return;
             }
 
@@ -1822,12 +1839,10 @@
                         console.log('配置モードのため、ドラッグをスキップ');
                         break;
                     } else {
-                        // ドラッグ開始
-                        isDragging = true;
+                        // ドラッグ開始の準備（即座には開始しない）
                         draggedGate = gate;
                         dragOffset.x = x - gate.x;
                         dragOffset.y = y - gate.y;
-                        console.log('ドラッグ開始:', gate.type, gate.id);
                         
                         // 入力回路の値変更
                         if (gate.type === 'INPUT') {
@@ -1855,6 +1870,38 @@
             mouseX = e.clientX - rect.left;
             mouseY = e.clientY - rect.top;
 
+            // ホバー状態をチェック
+            let pinFound = false;
+            hoveredPin = null;
+            hoveredGate = null;
+            
+            for (let gate of simulator.gates.values()) {
+                const pin = gate.getClickedPin(mouseX, mouseY);
+                if (pin) {
+                    hoveredPin = pin;
+                    hoveredGate = gate;
+                    pinFound = true;
+                    break;
+                }
+            }
+
+            // カーソルスタイルを更新
+            if (pinFound) {
+                canvas.style.cursor = 'pointer';
+            } else if (isDragging && draggedGate) {
+                canvas.style.cursor = 'move';
+            } else if (draggedGate && !isDragHold) {
+                // クリックしてから少し時間が経ったらドラッグモードに
+                const holdTime = Date.now() - mouseDownTime;
+                if (holdTime > 100) { // 100ms後にドラッグ開始
+                    isDragging = true;
+                    isDragHold = true;
+                    canvas.style.cursor = 'move';
+                }
+            } else {
+                canvas.style.cursor = 'default';
+            }
+
             if (isDragging && draggedGate) {
                 draggedGate.x = mouseX - dragOffset.x;
                 draggedGate.y = mouseY - dragOffset.y;
@@ -1866,13 +1913,41 @@
                 draw();
             } else if (simulator.isConnecting) {
                 draw();
+            } else if (pinFound || hoveredPin) {
+                draw(); // ホバー効果を表示するために再描画
             }
         });
 
         canvas.addEventListener('mouseup', () => {
             isDragging = false;
             draggedGate = null;
+            isDragHold = false;
+            mouseDownTime = 0;
         });
+
+        // 接続モードを有効化する関数
+        function activateConnectionMode() {
+            if (!simulator.isConnecting) {
+                simulator.isConnecting = true;
+                simulator.selectedGateType = null;
+                simulator.connectionStart = null;
+                dragMode = false;
+                deleteMode = false;
+                
+                // 全ての回路選択を解除
+                document.querySelectorAll('.gate-button').forEach(b => b.classList.remove('active'));
+                
+                // 全てのモードボタンを通常状態に戻す
+                resetModeButtons();
+                
+                // 接続ボタンを有効状態にする
+                const connectBtn = document.getElementById('connectMode');
+                connectBtn.style.background = 'linear-gradient(135deg, #dc2626, #b91c1c)';
+                connectBtn.textContent = '接続モード終了';
+                
+                updateModeIndicator();
+            }
+        }
 
         // 削除機能
         function handleDelete(x, y) {
