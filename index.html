@@ -2091,12 +2091,12 @@
             } else if(simulator.isConnecting) {
                 if(simulator.connectionStart) {
                     indicator.textContent = '接続モード: 入力ピン（左側の●）をクリック';
-                    indicator.style.background = '#fef3c7';
-                    indicator.style.borderColor = '#f59e0b';
+                    indicator.style.background = '#ecfdf5';
+                    indicator.style.borderColor = '#10b981';
                 } else {
                     indicator.textContent = '接続モード: 出力ピン（右側の●）をクリック';
                     indicator.style.background = '#fef3c7';
-                    indicator.style.borderColor = '#fbbf24';
+                    indicator.style.borderColor = '#f59e0b';
                 }
             } else if(simulator.selectedGateType) {
                 indicator.textContent = `配置モード: ${simulator.selectedGateType}回路`;
