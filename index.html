@@ -409,6 +409,238 @@
             background: #34495e;
             margin: 10px 0;
         }
+
+        /* レスポンシブデザイン - モバイル対応 */
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                border-radius: 8px;
+                margin: 0;
+            }
+
+            .header {
+                padding: 15px 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 5px;
+            }
+
+            .header p {
+                font-size: 0.9em;
+                margin: 2px 0;
+            }
+
+            .controls {
+                padding: 15px 10px;
+                gap: 10px;
+            }
+
+            .toolbar-enhanced {
+                width: 100%;
+            }
+
+            .tool-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-bottom: 15px;
+                width: 100%;
+            }
+
+            .tool-group label {
+                font-size: 14px;
+                font-weight: bold;
+                color: #374151;
+                margin-bottom: 5px;
+            }
+
+            .tool-group > div {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            /* タッチ操作最適化 - ボタンサイズ拡大 */
+            .tool-button {
+                min-height: 44px;
+                min-width: 44px;
+                padding: 12px 16px;
+                font-size: 14px;
+                flex: 1;
+                touch-action: manipulation;
+            }
+
+            .gate-button {
+                min-width: 100px;
+            }
+
+            .sim-button {
+                min-height: 44px;
+                padding: 12px 16px;
+                font-size: 14px;
+                touch-action: manipulation;
+            }
+
+            /* キャンバスコンテナのモバイル最適化 */
+            .canvas-container {
+                padding: 10px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #canvas {
+                width: 100%;
+                max-width: 100%;
+                height: 400px;
+                border-radius: 8px;
+                touch-action: none;
+            }
+
+            /* ステータスバーのモバイル対応 */
+            .status-bar {
+                padding: 15px 10px;
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .simulation-controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .simulation-controls .sim-button {
+                width: 100%;
+            }
+
+            /* モード表示の最適化 */
+            .mode-indicator {
+                font-size: 14px;
+                padding: 10px;
+                text-align: center;
+            }
+
+            /* シミュレーション詳細のモバイル対応 */
+            #simulationDetails {
+                margin: 10px;
+                padding: 15px;
+            }
+
+            .step-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .step-controls .sim-button {
+                width: 100%;
+            }
+
+            /* テンプレート選択の最適化 */
+            #templateSelect {
+                width: 100%;
+                min-height: 44px;
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 6px;
+                border: 1px solid #d1d5db;
+                touch-action: manipulation;
+            }
+
+            /* 信号表示の最適化 */
+            .signal-value {
+                width: 24px;
+                height: 24px;
+                line-height: 24px;
+                font-size: 14px;
+            }
+
+            .gate-calculation {
+                font-size: 14px;
+                padding: 10px 12px;
+            }
+        }
+
+        /* 極小画面対応 (320px以下) */
+        @media screen and (max-width: 320px) {
+            .header h1 {
+                font-size: 1.2em;
+            }
+
+            .tool-button {
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+
+            .simulation-controls {
+                grid-template-columns: 1fr;
+            }
+
+            #canvas {
+                height: 300px;
+            }
+        }
+
+        /* タッチデバイス用の追加スタイル */
+        @media (hover: none) and (pointer: coarse) {
+            .tool-button:hover {
+                transform: none;
+                box-shadow: none;
+            }
+
+            .tool-button:active {
+                transform: scale(0.95);
+                transition: transform 0.1s;
+            }
+
+            /* タッチ時の視覚的フィードバック */
+            .tool-button.active {
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+            }
+
+            /* より大きなタップエリア */
+            .sim-button, .tool-button {
+                position: relative;
+            }
+
+            .sim-button::before, .tool-button::before {
+                content: '';
+                position: absolute;
+                top: -10px;
+                left: -10px;
+                right: -10px;
+                bottom: -10px;
+                z-index: -1;
+            }
+        }
+
+        /* 横向きモバイル対応 */
+        @media screen and (max-width: 768px) and (orientation: landscape) {
+            #canvas {
+                height: 300px;
+            }
+
+            .status-bar {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .simulation-controls {
+                display: flex;
+                gap: 8px;
+            }
+
+            .simulation-controls .sim-button {
+                width: auto;
+                flex: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1029,30 +1261,124 @@
                     description: description,
                     gateStates: new Map(),
                     connectionStates: [],
-                    calculations: []
+                    calculations: [],
+                    signalChanges: [],
+                    timestamp: Date.now()
                 };
 
                 // 各回路の状態を記録
                 for(let [id, gate] of this.gates) {
-                    stepData.gateStates.set(id, {
+                    const previousState = this.detailedSteps.length > 0 ? 
+                        this.detailedSteps[this.detailedSteps.length - 1].gateStates.get(id) : null;
+                    
+                    const currentState = {
                         type: gate.type,
                         inputValues: [...gate.inputValues],
                         outputValue: gate.outputValue,
                         x: gate.x,
-                        y: gate.y
-                    });
+                        y: gate.y,
+                        changed: false
+                    };
+
+                    // 状態変化を検出
+                    if (previousState) {
+                        const inputChanged = !this.arraysEqual(previousState.inputValues, currentState.inputValues);
+                        const outputChanged = previousState.outputValue !== currentState.outputValue;
+                        currentState.changed = inputChanged || outputChanged;
+                        
+                        if (currentState.changed) {
+                            stepData.signalChanges.push({
+                                gateId: id,
+                                type: gate.type,
+                                previousInputs: previousState.inputValues,
+                                currentInputs: currentState.inputValues,
+                                previousOutput: previousState.outputValue,
+                                currentOutput: currentState.outputValue,
+                                inputChanged: inputChanged,
+                                outputChanged: outputChanged
+                            });
+                        }
+                    }
+
+                    stepData.gateStates.set(id, currentState);
                 }
 
                 // 接続の状態を記録
-                stepData.connectionStates = this.connections.map(conn => ({
-                    fromGateId: conn.fromGate.id,
-                    toGateId: conn.toGate.id,
-                    signal: conn.signal,
-                    fromType: conn.fromGate.type,
-                    toType: conn.toGate.type
-                }));
+                stepData.connectionStates = this.connections.map(conn => {
+                    const previousStep = this.detailedSteps.length > 0 ? 
+                        this.detailedSteps[this.detailedSteps.length - 1] : null;
+                    const previousConn = previousStep ? 
+                        previousStep.connectionStates.find(c => 
+                            c.fromGateId === conn.fromGate.id && c.toGateId === conn.toGate.id) : null;
+                    
+                    return {
+                        fromGateId: conn.fromGate.id,
+                        toGateId: conn.toGate.id,
+                        signal: conn.signal,
+                        fromType: conn.fromGate.type,
+                        toType: conn.toGate.type,
+                        signalChanged: previousConn ? previousConn.signal !== conn.signal : true
+                    };
+                });
+
+                // 論理演算の詳細を記録
+                for(let [id, gate] of this.gates) {
+                    if (gate.type !== 'INPUT' && gate.type !== 'OUTPUT') {
+                        const calculation = this.getGateCalculationDetails(gate);
+                        if (calculation) {
+                            stepData.calculations.push({
+                                gateId: id,
+                                gateType: gate.type,
+                                ...calculation
+                            });
+                        }
+                    }
+                }
 
                 this.detailedSteps.push(stepData);
+            }
+
+            arraysEqual(a, b) {
+                if (a.length !== b.length) return false;
+                return a.every((val, i) => val === b[i]);
+            }
+
+            getGateCalculationDetails(gate) {
+                const inputs = gate.inputValues.filter(val => val !== null);
+                if (inputs.length === 0) return null;
+
+                let calculation = '';
+                let result = gate.outputValue;
+
+                switch(gate.type) {
+                    case 'AND':
+                        calculation = inputs.join(' AND ');
+                        return {
+                            operation: 'AND',
+                            inputs: [...inputs],
+                            formula: calculation,
+                            result: result,
+                            explanation: `${inputs.join(' × ')} = ${result}`
+                        };
+                    case 'OR':
+                        calculation = inputs.join(' OR ');
+                        return {
+                            operation: 'OR',
+                            inputs: [...inputs],
+                            formula: calculation,
+                            result: result,
+                            explanation: `${inputs.join(' + ')} = ${result}`
+                        };
+                    case 'NOT':
+                        return {
+                            operation: 'NOT',
+                            inputs: [...inputs],
+                            formula: `NOT ${inputs[0]}`,
+                            result: result,
+                            explanation: `¬${inputs[0]} = ${result}`
+                        };
+                }
+                return null;
             }
 
             executeStep() {
@@ -1227,15 +1553,56 @@
                         <div class="step-title">${stepData.title}</div>
                         <div style="margin-bottom: 10px; color: #6b7280;">${stepData.description}</div>
                     `;
+
+                    // 信号変化のハイライト表示
+                    if (stepData.signalChanges && stepData.signalChanges.length > 0) {
+                        stepHTML += '<div style="margin-bottom: 15px; background: #fef3c7; padding: 10px; border-radius: 6px; border: 1px solid #f59e0b;"><strong>🔄 変化した信号:</strong><br>';
+                        stepData.signalChanges.forEach((change) => {
+                            const changeIcon = change.outputChanged ? '🔄' : '📥';
+                            stepHTML += `
+                                <div style="margin: 5px 0; padding: 5px; background: white; border-radius: 4px;">
+                                    <span style="font-weight: bold;">${changeIcon} ${change.type}-${change.gateId}</span><br>
+                                    ${change.inputChanged ? `入力: [${change.previousInputs.join(', ')}] → [${change.currentInputs.join(', ')}]<br>` : ''}
+                                    ${change.outputChanged ? `出力: ${change.previousOutput} → ${change.currentOutput}` : ''}
+                                </div>
+                            `;
+                        });
+                        stepHTML += '</div>';
+                    }
+
+                    // 詳細な論理演算の表示
+                    if (stepData.calculations && stepData.calculations.length > 0) {
+                        stepHTML += '<div style="margin-bottom: 15px;"><strong>📊 論理演算の詳細:</strong><br>';
+                        stepData.calculations.forEach((calc) => {
+                            const operationIcon = calc.gateType === 'AND' ? '∧' : calc.gateType === 'OR' ? '∨' : '¬';
+                            stepHTML += `
+                                <div class="gate-calculation" style="margin: 8px 0; background: #f0f9ff; border: 1px solid #0ea5e9;">
+                                    <div style="font-weight: bold; color: #0369a1;">${operationIcon} ${calc.gateType}-${calc.gateId}</div>
+                                    <div style="margin: 5px 0;">
+                                        <span style="color: #64748b;">入力:</span> [${calc.inputs.join(', ')}]
+                                    </div>
+                                    <div style="margin: 5px 0;">
+                                        <span style="color: #64748b;">計算:</span> ${calc.explanation}
+                                    </div>
+                                    <div style="margin: 5px 0; font-weight: bold;">
+                                        <span style="color: #064e3b;">結果:</span> 
+                                        <span class="signal-value ${calc.result ? 'signal-high' : 'signal-low'}" style="margin-left: 5px;">${calc.result}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        stepHTML += '</div>';
+                    }
                     
                     // 入力回路の状態を表示
                     const inputGates = Array.from(stepData.gateStates.entries()).filter(([id, state]) => state.type === 'INPUT');
                     if (inputGates.length > 0) {
-                        stepHTML += '<div style="margin-bottom: 10px;"><strong>入力値:</strong><br>';
+                        stepHTML += '<div style="margin-bottom: 10px;"><strong>📥 入力値:</strong><br>';
                         inputGates.forEach(([id, state]) => {
+                            const changeIndicator = state.changed ? '🔄' : '';
                             stepHTML += `
                                 <div class="signal-flow">
-                                    <span>INPUT-${id}:</span>
+                                    <span>INPUT-${id}: ${changeIndicator}</span>
                                     <div class="signal-value ${state.outputValue ? 'signal-high' : 'signal-low'}">${state.outputValue}</div>
                                 </div>
                             `;
@@ -1243,44 +1610,18 @@
                         stepHTML += '</div>';
                     }
                     
-                    // 接続の信号状態を表示
+                    // 接続の信号状態を表示（変化があったもののみハイライト）
                     if (stepData.connectionStates.length > 0) {
-                        stepHTML += '<div style="margin-bottom: 10px;"><strong>信号の流れ:</strong><br>';
+                        stepHTML += '<div style="margin-bottom: 10px;"><strong>🔗 信号の流れ:</strong><br>';
                         stepData.connectionStates.forEach((connState) => {
+                            const changeClass = connState.signalChanged ? 'style="background: #fef3c7; padding: 3px; border-radius: 3px;"' : '';
+                            const changeIcon = connState.signalChanged ? '⚡' : '';
                             stepHTML += `
-                                <div class="signal-flow">
+                                <div class="signal-flow" ${changeClass}>
                                     <span>${connState.fromType}-${connState.fromGateId}</span>
                                     <div class="signal-value ${connState.signal ? 'signal-high' : 'signal-low'}">${connState.signal}</div>
-                                    <span class="signal-arrow">→</span>
+                                    <span class="signal-arrow">→ ${changeIcon}</span>
                                     <span>${connState.toType}-${connState.toGateId}</span>
-                                </div>
-                            `;
-                        });
-                        stepHTML += '</div>';
-                    }
-                    
-                    // 論理回路の計算を表示
-                    const logicGates = Array.from(stepData.gateStates.entries()).filter(([id, state]) => 
-                        ['AND', 'OR', 'NOT'].includes(state.type)
-                    );
-                    if (logicGates.length > 0) {
-                        stepHTML += '<div style="margin-bottom: 10px;"><strong>論理演算:</strong><br>';
-                        logicGates.forEach(([id, state]) => {
-                            let calculation = '';
-                            switch(state.type) {
-                                case 'AND':
-                                    calculation = `${state.inputValues.join(' ∧ ')} = ${state.outputValue}`;
-                                    break;
-                                case 'OR':
-                                    calculation = `${state.inputValues.join(' ∨ ')} = ${state.outputValue}`;
-                                    break;
-                                case 'NOT':
-                                    calculation = `¬${state.inputValues[0]} = ${state.outputValue}`;
-                                    break;
-                            }
-                            stepHTML += `
-                                <div class="gate-calculation">
-                                    ${state.type}-${id}: ${calculation}
                                 </div>
                             `;
                         });
@@ -1290,11 +1631,12 @@
                     // 出力回路の状態を表示
                     const outputGates = Array.from(stepData.gateStates.entries()).filter(([id, state]) => state.type === 'OUTPUT');
                     if (outputGates.length > 0) {
-                        stepHTML += '<div style="margin-bottom: 10px;"><strong>出力値:</strong><br>';
+                        stepHTML += '<div style="margin-bottom: 10px;"><strong>📤 出力値:</strong><br>';
                         outputGates.forEach(([id, state]) => {
+                            const changeIndicator = state.changed ? '🔄' : '';
                             stepHTML += `
                                 <div class="signal-flow">
-                                    <span>OUTPUT-${id}:</span>
+                                    <span>OUTPUT-${id}: ${changeIndicator}</span>
                                     <div class="signal-value ${state.outputValue ? 'signal-high' : 'signal-low'}">${state.outputValue}</div>
                                 </div>
                             `;
