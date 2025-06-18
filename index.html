@@ -709,7 +709,9 @@
                         this.outputValue = this.inputValues.some(v => v === 1) ? 1 : 0;
                         break;
                     case 'NOT':
-                        this.outputValue = this.inputValues[0] === 1 ? 0 : 1;
+                        if(this.inputValues.length > 0 && this.inputValues[0] !== undefined) {
+                            this.outputValue = this.inputValues[0] === 1 ? 0 : 1;
+                        }
                         break;
                     case 'INPUT':
                         // 入力回路は手動で値を設定（outputValueがそのまま出力）
@@ -888,7 +890,9 @@
 
             updateSignal() {
                 this.signal = this.fromGate.outputValue;
-                this.toGate.inputValues[this.toPin] = this.signal;
+                if(this.toGate.inputValues && this.toPin < this.toGate.inputValues.length) {
+                    this.toGate.inputValues[this.toPin] = this.signal;
+                }
             }
 
             containsPoint(x, y) {
