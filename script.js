@@ -1481,6 +1481,9 @@ function loadCircuitData(circuitData) {
     
     simulator.nextGateId = Math.max(...circuitData.gates.map(g => g.id)) + 1;
     draw();
+    
+    // 真理値表を更新
+    updateTruthTableIfNeeded();
 }
 
 
@@ -1668,3 +1671,131 @@ document.addEventListener('keydown', (e) => {
             break;
     }
 });
+
+// 動的真理値表生成機能
+function generateDynamicTruthTable() {
+    const inputGates = Array.from(simulator.gates.values()).filter(gate => gate.type === 'INPUT');
+    const outputGates = Array.from(simulator.gates.values()).filter(gate => gate.type === 'OUTPUT');
+    
+    if (inputGates.length === 0 || outputGates.length === 0) {
+        document.getElementById('dynamicTruthTable').style.display = 'none';
+        return;
+    }
+    
+    // 入力が4つを超える場合は表示しない（テーブルが大きくなりすぎるため）
+    if (inputGates.length > 4) {
+        const truthTableDiv = document.getElementById('dynamicTruthTable');
+        truthTableDiv.style.display = 'block';
+        document.getElementById('truthTableContent').innerHTML = `
+            <div class="truth-table-info">
+                ⚠️ 入力数が多すぎます（${inputGates.length}個）。真理値表は入力数が4個以下の場合のみ表示されます。
+            </div>
+        `;
+        return;
+    }
+    
+    const numCombinations = Math.pow(2, inputGates.length);
+    
+    // 入力の全ての組み合わせを生成
+    const combinations = [];
+    for (let i = 0; i < numCombinations; i++) {
+        const combination = [];
+        for (let j = 0; j < inputGates.length; j++) {
+            combination.push((i >> (inputGates.length - 1 - j)) & 1);
+        }
+        combinations.push(combination);
+    }
+    
+    // 各組み合わせに対して回路をシミュレート
+    const results = [];
+    combinations.forEach(combination => {
+        // 入力値を設定
+        inputGates.forEach((gate, index) => {
+            gate.outputValue = combination[index];
+        });
+        
+        // 回路を安定化
+        simulator.updateCircuit();
+        
+        // 出力値を取得
+        const outputs = outputGates.map(gate => gate.outputValue);
+        results.push({
+            inputs: [...combination],
+            outputs: outputs
+        });
+    });
+    
+    // HTMLテーブルを生成
+    let tableHTML = '<div class="circuit-truth-table"><table>';
+    
+    // ヘッダー行
+    tableHTML += '<tr>';
+    inputGates.forEach((gate, index) => {
+        tableHTML += `<th class="input-col">入力${index + 1}</th>`;
+    });
+    outputGates.forEach((gate, index) => {
+        tableHTML += `<th class="output-col">出力${index + 1}</th>`;
+    });
+    tableHTML += '</tr>';
+    
+    // データ行
+    results.forEach(result => {
+        tableHTML += '<tr>';
+        result.inputs.forEach(input => {
+            tableHTML += `<td class="value-${input}">${input}</td>`;
+        });
+        result.outputs.forEach(output => {
+            tableHTML += `<td class="value-${output}">${output}</td>`;
+        });
+        tableHTML += '</tr>';
+    });
+    
+    tableHTML += '</table></div>';
+    
+    // 情報メッセージを追加
+    const infoHTML = `
+        <div class="truth-table-info">
+            📋 現在の回路構成: 入力${inputGates.length}個、出力${outputGates.length}個
+            <br>📊 真理値表の行数: ${numCombinations}行
+        </div>
+    `;
+    
+    // 表示
+    document.getElementById('truthTableContent').innerHTML = infoHTML + tableHTML;
+    document.getElementById('dynamicTruthTable').style.display = 'block';
+}
+
+// 回路変更時に真理値表を更新
+function updateTruthTableIfNeeded() {
+    // 少し遅延を入れて回路が安定してから更新
+    setTimeout(() => {
+        generateDynamicTruthTable();
+    }, 100);
+}
+
+// 既存の関数に真理値表更新を追加
+const originalAddGate = simulator.addGate;
+simulator.addGate = function(type, x, y) {
+    const result = originalAddGate.call(this, type, x, y);
+    updateTruthTableIfNeeded();
+    return result;
+};
+
+const originalRemoveGate = simulator.removeGate;
+simulator.removeGate = function(gateId) {
+    originalRemoveGate.call(this, gateId);
+    updateTruthTableIfNeeded();
+};
+
+const originalAddConnection = simulator.addConnection;
+simulator.addConnection = function(fromGate, fromPin, toGate, toPin) {
+    const result = originalAddConnection.call(this, fromGate, fromPin, toGate, toPin);
+    updateTruthTableIfNeeded();
+    return result;
+};
+
+const originalClear = simulator.clear;
+simulator.clear = function() {
+    originalClear.call(this);
+    document.getElementById('dynamicTruthTable').style.display = 'none';
+};

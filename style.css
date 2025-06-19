@@ -648,3 +648,86 @@ body {
     justify-content: center;
     gap: 30px;
 }
+
+/* 動的真理値表のスタイル */
+.dynamic-truth-table {
+    margin: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 20px;
+    border-left: 5px solid #3b82f6;
+}
+
+.dynamic-truth-table h3 {
+    margin-top: 0;
+    color: #1f2937;
+    text-align: center;
+}
+
+.circuit-truth-table {
+    margin: 15px 0;
+    overflow-x: auto;
+}
+
+.circuit-truth-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+.circuit-truth-table th,
+.circuit-truth-table td {
+    border: 2px solid #e5e7eb;
+    padding: 8px 12px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.circuit-truth-table th {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.circuit-truth-table td {
+    background: #f8fafc;
+}
+
+.circuit-truth-table tr:nth-child(even) td {
+    background: #f1f5f9;
+}
+
+.circuit-truth-table .input-col {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.circuit-truth-table .output-col {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.circuit-truth-table .value-1 {
+    background: #fef3c7;
+    color: #92400e;
+    font-weight: bold;
+}
+
+.circuit-truth-table .value-0 {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.truth-table-info {
+    background: #eff6ff;
+    border: 1px solid #3b82f6;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 14px;
+    color: #1e40af;
+}
