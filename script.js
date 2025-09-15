@@ -1203,7 +1203,7 @@ const circuitTemplates = {
             {fromGateId: 28, fromPin: 0, toGateId: 29, toPin: 0}
         ]
     }
-};;
+};
 
 // イベントリスナー
 document.querySelectorAll('.gate-button').forEach(button => {
