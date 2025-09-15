@@ -1119,6 +1119,89 @@ const circuitTemplates = {
             {fromGateId: 3, fromPin: 0, toGateId: 4, toPin: 1},
             {fromGateId: 4, fromPin: 0, toGateId: 5, toPin: 0}
         ]
+    },
+
+    all_patterns_abcde: {
+        name: "全パターン表示 (A-E)",
+        description: "スクリーンショットの5つの回路パターンを一画面に配置",
+        gates: [
+            // パターンA (左上)
+            {id: 1, type: "INPUT", x: 50, y: 50, outputValue: 0},   // A
+            {id: 2, type: "INPUT", x: 50, y: 90, outputValue: 0},   // B
+            {id: 3, type: "OR", x: 150, y: 70, outputValue: 0},
+            {id: 4, type: "AND", x: 250, y: 70, outputValue: 0},
+            {id: 5, type: "NOT", x: 150, y: 130, outputValue: 0},
+            {id: 6, type: "OUTPUT", x: 350, y: 70, outputValue: 0}, // X
+
+            // パターンB (右上)
+            {id: 7, type: "INPUT", x: 450, y: 50, outputValue: 0},  // A
+            {id: 8, type: "INPUT", x: 450, y: 90, outputValue: 0},  // B
+            {id: 9, type: "AND", x: 550, y: 50, outputValue: 0},
+            {id: 10, type: "AND", x: 550, y: 90, outputValue: 0},
+            {id: 11, type: "OR", x: 650, y: 70, outputValue: 0},
+            {id: 12, type: "OUTPUT", x: 750, y: 70, outputValue: 0}, // X
+
+            // パターンC (左中央)
+            {id: 13, type: "INPUT", x: 50, y: 200, outputValue: 0}, // A
+            {id: 14, type: "INPUT", x: 50, y: 240, outputValue: 0}, // B
+            {id: 15, type: "AND", x: 150, y: 220, outputValue: 0},
+            {id: 16, type: "NOT", x: 250, y: 220, outputValue: 0},
+            {id: 17, type: "OUTPUT", x: 350, y: 220, outputValue: 0}, // X
+
+            // パターンD (右中央)
+            {id: 18, type: "INPUT", x: 450, y: 200, outputValue: 0}, // A
+            {id: 19, type: "INPUT", x: 450, y: 240, outputValue: 0}, // B
+            {id: 20, type: "NOT", x: 550, y: 200, outputValue: 0},
+            {id: 21, type: "NOT", x: 550, y: 240, outputValue: 0},
+            {id: 22, type: "OR", x: 650, y: 220, outputValue: 0},
+            {id: 23, type: "NOT", x: 750, y: 220, outputValue: 0},
+            {id: 24, type: "OUTPUT", x: 850, y: 220, outputValue: 0}, // X
+
+            // パターンE (中央下)
+            {id: 25, type: "INPUT", x: 250, y: 350, outputValue: 0}, // A
+            {id: 26, type: "INPUT", x: 250, y: 420, outputValue: 0}, // B
+            {id: 27, type: "NOT", x: 350, y: 420, outputValue: 0},
+            {id: 28, type: "OR", x: 450, y: 385, outputValue: 0},
+            {id: 29, type: "OUTPUT", x: 550, y: 385, outputValue: 0} // X
+        ],
+        connections: [
+            // パターンA接続
+            {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 3, toPin: 1},
+            {fromGateId: 3, fromPin: 0, toGateId: 4, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 5, toPin: 0},
+            {fromGateId: 5, fromPin: 0, toGateId: 4, toPin: 1},
+            {fromGateId: 4, fromPin: 0, toGateId: 6, toPin: 0},
+
+            // パターンB接続
+            {fromGateId: 7, fromPin: 0, toGateId: 9, toPin: 0},
+            {fromGateId: 8, fromPin: 0, toGateId: 9, toPin: 1},
+            {fromGateId: 7, fromPin: 0, toGateId: 10, toPin: 0},
+            {fromGateId: 8, fromPin: 0, toGateId: 10, toPin: 1},
+            {fromGateId: 9, fromPin: 0, toGateId: 11, toPin: 0},
+            {fromGateId: 10, fromPin: 0, toGateId: 11, toPin: 1},
+            {fromGateId: 11, fromPin: 0, toGateId: 12, toPin: 0},
+
+            // パターンC接続
+            {fromGateId: 13, fromPin: 0, toGateId: 15, toPin: 0},
+            {fromGateId: 14, fromPin: 0, toGateId: 15, toPin: 1},
+            {fromGateId: 15, fromPin: 0, toGateId: 16, toPin: 0},
+            {fromGateId: 16, fromPin: 0, toGateId: 17, toPin: 0},
+
+            // パターンD接続
+            {fromGateId: 18, fromPin: 0, toGateId: 20, toPin: 0},
+            {fromGateId: 19, fromPin: 0, toGateId: 21, toPin: 0},
+            {fromGateId: 20, fromPin: 0, toGateId: 22, toPin: 0},
+            {fromGateId: 21, fromPin: 0, toGateId: 22, toPin: 1},
+            {fromGateId: 22, fromPin: 0, toGateId: 23, toPin: 0},
+            {fromGateId: 23, fromPin: 0, toGateId: 24, toPin: 0},
+
+            // パターンE接続
+            {fromGateId: 25, fromPin: 0, toGateId: 28, toPin: 0},
+            {fromGateId: 26, fromPin: 0, toGateId: 27, toPin: 0},
+            {fromGateId: 27, fromPin: 0, toGateId: 28, toPin: 1},
+            {fromGateId: 28, fromPin: 0, toGateId: 29, toPin: 0}
+        ]
     }
 };;
 
