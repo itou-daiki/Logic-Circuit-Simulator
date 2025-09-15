@@ -66,11 +66,20 @@
                     <label>テンプレート:</label>
                     <select id="templateSelect">
                         <option value="">選択してください</option>
-                        <option value="half_adder">半加算器</option>
-                        <option value="full_adder">全加算器</option>
-                        <option value="mux2to1">2-to-1マルチプレクサ</option>
-                        <option value="decoder2to4">2-to-4デコーダ</option>
-                        <option value="sr_latch">SRラッチ</option>
+                        <optgroup label="基本回路">
+                            <option value="half_adder">半加算器</option>
+                            <option value="full_adder">全加算器</option>
+                            <option value="mux2to1">2-to-1マルチプレクサ</option>
+                            <option value="decoder2to4">2-to-4デコーダ</option>
+                            <option value="sr_latch">SRラッチ</option>
+                        </optgroup>
+                        <optgroup label="回路パターン">
+                            <option value="circuit_pattern_a">論理回路パターンA</option>
+                            <option value="circuit_pattern_b">論理回路パターンB</option>
+                            <option value="circuit_pattern_c">論理回路パターンC</option>
+                            <option value="circuit_pattern_d">論理回路パターンD</option>
+                            <option value="circuit_pattern_e">論理回路パターンE</option>
+                        </optgroup>
                     </select>
                     <button class="tool-button control-button" id="loadTemplate">読込</button>
                 </div>

@@ -853,6 +853,7 @@ let isDragHold = false;
 
 // テンプレート回路のデータ
 const circuitTemplates = {
+    // 既存テンプレート
     half_adder: {
         name: "半加算器",
         description: "2つの1ビット数を加算し、和(Sum)とキャリー(Carry)を出力。A⊕B=Sum, A∧B=Carry",
@@ -1016,8 +1017,110 @@ const circuitTemplates = {
             {fromGateId: 5, fromPin: 0, toGateId: 7, toPin: 0},
             {fromGateId: 6, fromPin: 0, toGateId: 8, toPin: 0}
         ]
+    },
+    
+    // スクリーンショットから追加する新しいテンプレート
+    circuit_pattern_a: {
+        name: "論理回路パターンA",
+        description: "OR-AND-NOT の複合回路パターン",
+        gates: [
+            {id: 1, type: "INPUT", x: 50, y: 80, outputValue: 0},   // A
+            {id: 2, type: "INPUT", x: 50, y: 160, outputValue: 0},  // B
+            {id: 3, type: "OR", x: 180, y: 120, outputValue: 0},
+            {id: 4, type: "AND", x: 320, y: 120, outputValue: 0},
+            {id: 5, type: "NOT", x: 180, y: 220, outputValue: 0},
+            {id: 6, type: "OUTPUT", x: 480, y: 120, outputValue: 0} // X
+        ],
+        connections: [
+            {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 3, toPin: 1},
+            {fromGateId: 3, fromPin: 0, toGateId: 4, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 5, toPin: 0},
+            {fromGateId: 5, fromPin: 0, toGateId: 4, toPin: 1},
+            {fromGateId: 4, fromPin: 0, toGateId: 6, toPin: 0}
+        ]
+    },
+    
+    circuit_pattern_b: {
+        name: "論理回路パターンB",
+        description: "AND-OR の基本組み合わせ回路",
+        gates: [
+            {id: 1, type: "INPUT", x: 50, y: 80, outputValue: 0},   // A
+            {id: 2, type: "INPUT", x: 50, y: 160, outputValue: 0},  // B
+            {id: 3, type: "AND", x: 180, y: 80, outputValue: 0},
+            {id: 4, type: "AND", x: 180, y: 160, outputValue: 0},
+            {id: 5, type: "OR", x: 320, y: 120, outputValue: 0},
+            {id: 6, type: "OUTPUT", x: 480, y: 120, outputValue: 0} // X
+        ],
+        connections: [
+            {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 3, toPin: 1},
+            {fromGateId: 1, fromPin: 0, toGateId: 4, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 4, toPin: 1},
+            {fromGateId: 3, fromPin: 0, toGateId: 5, toPin: 0},
+            {fromGateId: 4, fromPin: 0, toGateId: 5, toPin: 1},
+            {fromGateId: 5, fromPin: 0, toGateId: 6, toPin: 0}
+        ]
+    },
+    
+    circuit_pattern_c: {
+        name: "論理回路パターンC",
+        description: "AND-NOT の単純な組み合わせ",
+        gates: [
+            {id: 1, type: "INPUT", x: 50, y: 80, outputValue: 0},   // A
+            {id: 2, type: "INPUT", x: 50, y: 160, outputValue: 0},  // B
+            {id: 3, type: "AND", x: 180, y: 120, outputValue: 0},
+            {id: 4, type: "NOT", x: 320, y: 120, outputValue: 0},
+            {id: 5, type: "OUTPUT", x: 480, y: 120, outputValue: 0} // X
+        ],
+        connections: [
+            {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 3, toPin: 1},
+            {fromGateId: 3, fromPin: 0, toGateId: 4, toPin: 0},
+            {fromGateId: 4, fromPin: 0, toGateId: 5, toPin: 0}
+        ]
+    },
+    
+    circuit_pattern_d: {
+        name: "論理回路パターンD",
+        description: "NOT-OR-NOT の連続回路",
+        gates: [
+            {id: 1, type: "INPUT", x: 50, y: 80, outputValue: 0},   // A
+            {id: 2, type: "INPUT", x: 50, y: 160, outputValue: 0},  // B
+            {id: 3, type: "NOT", x: 180, y: 80, outputValue: 0},
+            {id: 4, type: "NOT", x: 180, y: 160, outputValue: 0},
+            {id: 5, type: "OR", x: 320, y: 120, outputValue: 0},
+            {id: 6, type: "NOT", x: 460, y: 120, outputValue: 0},
+            {id: 7, type: "OUTPUT", x: 600, y: 120, outputValue: 0} // X
+        ],
+        connections: [
+            {fromGateId: 1, fromPin: 0, toGateId: 3, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 4, toPin: 0},
+            {fromGateId: 3, fromPin: 0, toGateId: 5, toPin: 0},
+            {fromGateId: 4, fromPin: 0, toGateId: 5, toPin: 1},
+            {fromGateId: 5, fromPin: 0, toGateId: 6, toPin: 0},
+            {fromGateId: 6, fromPin: 0, toGateId: 7, toPin: 0}
+        ]
+    },
+    
+    circuit_pattern_e: {
+        name: "論理回路パターンE",
+        description: "NOT-OR フィードバック回路",
+        gates: [
+            {id: 1, type: "INPUT", x: 50, y: 80, outputValue: 0},   // A
+            {id: 2, type: "INPUT", x: 50, y: 200, outputValue: 0},  // B
+            {id: 3, type: "NOT", x: 180, y: 200, outputValue: 0},
+            {id: 4, type: "OR", x: 320, y: 140, outputValue: 0},
+            {id: 5, type: "OUTPUT", x: 480, y: 140, outputValue: 0} // X
+        ],
+        connections: [
+            {fromGateId: 1, fromPin: 0, toGateId: 4, toPin: 0},
+            {fromGateId: 2, fromPin: 0, toGateId: 3, toPin: 0},
+            {fromGateId: 3, fromPin: 0, toGateId: 4, toPin: 1},
+            {fromGateId: 4, fromPin: 0, toGateId: 5, toPin: 0}
+        ]
     }
-};
+};;
 
 // イベントリスナー
 document.querySelectorAll('.gate-button').forEach(button => {
