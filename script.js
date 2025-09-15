@@ -1446,19 +1446,31 @@ document.getElementById('loadCircuit').addEventListener('click', () => {
     input.click();
 });
 
+// デバッグ用: グローバルスコープにテンプレートをアクセス可能にする
+window.debugTemplates = () => {
+    console.log('circuitTemplates:', circuitTemplates);
+    console.log('Keys:', Object.keys(circuitTemplates));
+    console.log('all_patterns_abcde exists:', 'all_patterns_abcde' in circuitTemplates);
+};
+
 // テンプレート読み込み機能
 document.getElementById('loadTemplate').addEventListener('click', () => {
     const templateSelect = document.getElementById('templateSelect');
     const templateName = templateSelect.value;
-    
+
+    console.log('選択されたテンプレート名:', templateName);
+    console.log('利用可能なテンプレート:', Object.keys(circuitTemplates));
+
     if (!templateName) {
         alert('テンプレートを選択してください。');
         return;
     }
-    
+
     const template = circuitTemplates[templateName];
+    console.log('テンプレートオブジェクト:', template);
+
     if (!template) {
-        alert('選択されたテンプレートが見つかりません。');
+        alert(`選択されたテンプレート「${templateName}」が見つかりません。\n利用可能: ${Object.keys(circuitTemplates).join(', ')}`);
         return;
     }
     
