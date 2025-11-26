@@ -649,6 +649,10 @@ class Simulator {
     draw(ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // ズーム変換を適用
+        ctx.save();
+        ctx.scale(zoomLevel, zoomLevel);
+
         // 接続を描画
         for(let connection of this.connections) {
             connection.draw(ctx);
@@ -666,10 +670,12 @@ class Simulator {
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
             ctx.moveTo(this.connectionStart.pin.x, this.connectionStart.pin.y);
-            ctx.lineTo(mouseX, mouseY);
+            ctx.lineTo(mouseX / zoomLevel, mouseY / zoomLevel);
             ctx.stroke();
             ctx.setLineDash([]);
         }
+
+        ctx.restore();
 
         // シミュレーション詳細を非表示
         document.getElementById('simulationDetails').style.display = 'none';
@@ -844,6 +850,7 @@ let draggedGate = null;
 let dragOffset = {x: 0, y: 0};
 let deleteMode = false;
 let dragMode = true; // デフォルトはドラッグモード
+let zoomLevel = 1.0; // ズームレベル（1.0 = 100%）
 let autoStepInterval = null;
 let currentSimulationStep = 0;
 let hoveredPin = null;
@@ -1489,8 +1496,8 @@ document.getElementById('loadTemplate').addEventListener('click', () => {
 // ドラッグ&ドロップのマウスイベント
 canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const x = (e.clientX - rect.left) / zoomLevel;
+    const y = (e.clientY - rect.top) / zoomLevel;
     mouseDownTime = Date.now();
     isDragHold = false;
 
@@ -1553,14 +1560,14 @@ canvas.addEventListener('mousedown', (e) => {
 
 canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    mouseX = e.clientX - rect.left;
-    mouseY = e.clientY - rect.top;
+    mouseX = (e.clientX - rect.left) / zoomLevel;
+    mouseY = (e.clientY - rect.top) / zoomLevel;
 
     // ホバー状態をチェック
     let pinFound = false;
     hoveredPin = null;
     hoveredGate = null;
-    
+
     for (let gate of simulator.gates.values()) {
         const pin = gate.getClickedPin(mouseX, mouseY);
         if (pin) {
@@ -1997,3 +2004,23 @@ simulator.clear = function() {
     originalClear.call(this);
     document.getElementById('dynamicTruthTable').style.display = 'none';
 };
+
+// ズーム機能
+document.getElementById('zoomIn').addEventListener('click', () => {
+    if (zoomLevel < 3.0) {
+        zoomLevel += 0.1;
+        draw();
+    }
+});
+
+document.getElementById('zoomOut').addEventListener('click', () => {
+    if (zoomLevel > 0.3) {
+        zoomLevel -= 0.1;
+        draw();
+    }
+});
+
+document.getElementById('zoomReset').addEventListener('click', () => {
+    zoomLevel = 1.0;
+    draw();
+});
