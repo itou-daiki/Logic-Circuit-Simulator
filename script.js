@@ -787,7 +787,7 @@ class Simulator {
 
             // 信号変化のハイライト表示
             if (stepData.signalChanges && stepData.signalChanges.length > 0) {
-                stepHTML += '<div style="margin-bottom: 15px; background: #fef3c7; padding: 10px; border-radius: 6px; border: 1px solid #f59e0b;"><strong>🔄 変化した信号:</strong><br>';
+                stepHTML += '<div style="margin-bottom: 15px; background: #dbeafe; padding: 10px; border-radius: 6px; border: 1px solid #1e90ff;"><strong>🔄 変化した信号:</strong><br>';
                 stepData.signalChanges.forEach((change) => {
                     const changeIcon = change.outputChanged ? '🔄' : '📥';
                     stepHTML += `
@@ -1353,10 +1353,10 @@ document.getElementById('connectMode').addEventListener('click', () => {
     // 接続ボタンの状態を更新
     const connectBtn = document.getElementById('connectMode');
     if(simulator.isConnecting) {
-        connectBtn.style.background = 'linear-gradient(135deg, #dc2626, #b91c1c)';
+        connectBtn.style.background = 'linear-gradient(135deg, #0ea5e9, #0284c7)';
         connectBtn.textContent = '接続モード終了';
     } else {
-        connectBtn.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+        connectBtn.style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
         connectBtn.textContent = '接続モード';
     }
     
@@ -1403,7 +1403,7 @@ document.getElementById('toggleSignalDisplay').addEventListener('click', () => {
         button.style.background = 'linear-gradient(135deg, #10b981, #059669)';
         button.textContent = '信号値表示: ON';
     } else {
-        button.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+        button.style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
         button.textContent = '信号値表示';
     }
     
@@ -1477,7 +1477,7 @@ document.getElementById('deleteMode').addEventListener('click', () => {
         deleteBtn.textContent = '削除モード終了';
         canvas.style.cursor = 'crosshair';
     } else {
-        deleteBtn.style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+        deleteBtn.style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
         deleteBtn.textContent = '削除モード';
         canvas.style.cursor = 'default';
     }
@@ -1538,9 +1538,9 @@ document.getElementById('loadCircuit').addEventListener('click', () => {
 
 // デバッグ用: グローバルスコープにテンプレートをアクセス可能にする
 window.debugTemplates = () => {
-    console.log('circuitTemplates:', circuitTemplates);
-    console.log('Keys:', Object.keys(circuitTemplates));
-    console.log('all_patterns_abcde exists:', 'all_patterns_abcde' in circuitTemplates);
+    // console.log('circuitTemplates:', circuitTemplates);
+    // console.log('Keys:', Object.keys(circuitTemplates));
+    // console.log('all_patterns_abcde exists:', 'all_patterns_abcde' in circuitTemplates);
 };
 
 // テンプレート読み込み機能
@@ -1548,8 +1548,8 @@ document.getElementById('loadTemplate').addEventListener('click', () => {
     const templateSelect = document.getElementById('templateSelect');
     const templateName = templateSelect.value;
 
-    console.log('選択されたテンプレート名:', templateName);
-    console.log('利用可能なテンプレート:', Object.keys(circuitTemplates));
+    // console.log('選択されたテンプレート名:', templateName);
+    // console.log('利用可能なテンプレート:', Object.keys(circuitTemplates));
 
     if (!templateName) {
         alert('テンプレートを選択してください。');
@@ -1557,7 +1557,7 @@ document.getElementById('loadTemplate').addEventListener('click', () => {
     }
 
     const template = circuitTemplates[templateName];
-    console.log('テンプレートオブジェクト:', template);
+    // console.log('テンプレートオブジェクト:', template);
 
     if (!template) {
         alert(`選択されたテンプレート「${templateName}」が見つかりません。\n利用可能: ${Object.keys(circuitTemplates).join(', ')}`);
@@ -1584,7 +1584,7 @@ canvas.addEventListener('mousedown', (e) => {
     mouseDownTime = Date.now();
     isDragHold = false;
 
-    console.log('マウスダウン:', {x, y, deleteMode, isConnecting: simulator.isConnecting, selectedGateType: simulator.selectedGateType});
+    // console.log('マウスダウン:', {x, y, deleteMode, isConnecting: simulator.isConnecting, selectedGateType: simulator.selectedGateType});
 
     if (deleteMode) {
         handleDelete(x, y);
@@ -1608,11 +1608,11 @@ canvas.addEventListener('mousedown', (e) => {
     for (let gate of simulator.gates.values()) {
         if (gate.containsPoint(x, y)) {
             gateClicked = true;
-            console.log('回路がクリックされました:', gate.type, gate.id);
-            
+            // console.log('回路がクリックされました:', gate.type, gate.id);
+
             if (simulator.selectedGateType) {
                 // 配置モードの場合は何もしない（新しい回路を配置するため）
-                console.log('配置モードのため、ドラッグをスキップ');
+                // console.log('配置モードのため、ドラッグをスキップ');
                 break;
             } else {
                 // ドラッグ開始の準備（即座には開始しない）
@@ -1623,7 +1623,7 @@ canvas.addEventListener('mousedown', (e) => {
                 // 入力回路の値変更
                 if (gate.type === 'INPUT') {
                     gate.outputValue = gate.outputValue === 1 ? 0 : 1;
-                    console.log('入力値変更:', gate.outputValue);
+                    // console.log('入力値変更:', gate.outputValue);
                     // 即座に回路を更新
                     simulator.updateCircuit();
                     draw();
@@ -1635,7 +1635,7 @@ canvas.addEventListener('mousedown', (e) => {
 
     // 回路配置
     if (simulator.selectedGateType && !gateClicked) {
-        console.log('新しい回路を配置:', simulator.selectedGateType);
+        // console.log('新しい回路を配置:', simulator.selectedGateType);
         simulator.addGate(simulator.selectedGateType, x - 40, y - 30);
         draw();
     }
@@ -1718,7 +1718,7 @@ function activateConnectionMode() {
         
         // 接続ボタンを有効状態にする
         const connectBtn = document.getElementById('connectMode');
-        connectBtn.style.background = 'linear-gradient(135deg, #dc2626, #b91c1c)';
+        connectBtn.style.background = 'linear-gradient(135deg, #0ea5e9, #0284c7)';
         connectBtn.textContent = '接続モード終了';
         
         updateModeIndicator();
@@ -1790,11 +1790,11 @@ function handleConnectionClick(x, y) {
     }
 
     if(!clickedPin) {
-        console.log('ピンがクリックされませんでした');
+        // console.log('ピンがクリックされませんでした');
         return;
     }
 
-    console.log('クリックされたピン:', clickedPin.type, 'ゲート:', clickedGate.type);
+    // console.log('クリックされたピン:', clickedPin.type, 'ゲート:', clickedGate.type);
 
     if(!simulator.connectionStart) {
         // 接続開始（出力ピンのみ）
@@ -1804,10 +1804,10 @@ function handleConnectionClick(x, y) {
                 pin: clickedPin,
                 pinIndex: clickedPin.index
             };
-            console.log('接続開始:', clickedGate.type, 'の出力ピン');
+            // console.log('接続開始:', clickedGate.type, 'の出力ピン');
             updateModeIndicator();
         } else {
-            console.log('出力ピンを最初にクリックしてください');
+            // console.log('出力ピンを最初にクリックしてください');
         }
     } else {
         // 接続完了（入力ピンのみ）
@@ -1818,16 +1818,16 @@ function handleConnectionClick(x, y) {
                 clickedGate,
                 clickedPin.index
             );
-            
+
             if(success) {
-                console.log('接続が完了しました');
+                // console.log('接続が完了しました');
             } else {
                 alert('このピンは既に接続されています。');
             }
         } else if(clickedPin.type !== 'input') {
-            console.log('入力ピンをクリックしてください');
+            // console.log('入力ピンをクリックしてください');
         } else {
-            console.log('同じゲートには接続できません');
+            // console.log('同じゲートには接続できません');
         }
         
         simulator.connectionStart = null;
@@ -1853,11 +1853,11 @@ function handleGateClick(x, y) {
 
 // モードボタンをリセットする関数
 function resetModeButtons() {
-    document.getElementById('dragMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    document.getElementById('dragMode').style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
     document.getElementById('dragMode').textContent = 'ドラッグモード';
-    document.getElementById('connectMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    document.getElementById('connectMode').style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
     document.getElementById('connectMode').textContent = '接続モード';
-    document.getElementById('deleteMode').style.background = 'linear-gradient(135deg, #8b5cf6, #7c3aed)';
+    document.getElementById('deleteMode').style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
     document.getElementById('deleteMode').textContent = '削除モード';
 }
 
@@ -1867,28 +1867,34 @@ function updateModeIndicator() {
         indicator.textContent = '削除モード: 削除する回路や接続をクリック';
         indicator.style.background = '#fef2f2';
         indicator.style.borderColor = '#ef4444';
+        indicator.style.color = '#991b1b';
     } else if(simulator.isConnecting) {
         if(simulator.connectionStart) {
             indicator.textContent = '接続モード: 入力ピン（左側の●）をクリック';
-            indicator.style.background = '#ecfdf5';
-            indicator.style.borderColor = '#10b981';
+            indicator.style.background = '#eff6ff';
+            indicator.style.borderColor = '#1e90ff';
+            indicator.style.color = '#1e40af';
         } else {
             indicator.textContent = '接続モード: 出力ピン（右側の●）をクリック';
-            indicator.style.background = '#fef3c7';
-            indicator.style.borderColor = '#f59e0b';
+            indicator.style.background = '#eff6ff';
+            indicator.style.borderColor = '#1e90ff';
+            indicator.style.color = '#1e40af';
         }
-    } else if(simulator.selectedGateType) {
-        indicator.textContent = `配置モード: ${simulator.selectedGateType}回路`;
-        indicator.style.background = '#dcfce7';
-        indicator.style.borderColor = '#22c55e';
     } else if(dragMode) {
-        indicator.textContent = 'ドラッグモード: 回路をドラッグで移動、入力回路をクリックで値変更';
-        indicator.style.background = '#eff6ff';
-        indicator.style.borderColor = '#3b82f6';
+        indicator.textContent = 'ドラッグモード: 回路をドラッグで移動';
+        indicator.style.background = '#f0fdf4';
+        indicator.style.borderColor = '#10b981';
+        indicator.style.color = '#065f46';
+    } else if(simulator.selectedGateType) {
+        indicator.textContent = '配置モード: キャンバスをクリックして ' + simulator.selectedGateType + ' を配置';
+        indicator.style.background = '#fefce8';
+        indicator.style.borderColor = '#eab308';
+        indicator.style.color = '#713f12';
     } else {
-        indicator.textContent = 'ドラッグモード: 回路をドラッグで移動、入力回路をクリックで値変更';
-        indicator.style.background = '#eff6ff';
-        indicator.style.borderColor = '#3b82f6';
+        indicator.textContent = '配置モード: 回路を選択してください';
+        indicator.style.background = '#fefce8';
+        indicator.style.borderColor = '#eab308';
+        indicator.style.color = '#713f12';
     }
 }
 
