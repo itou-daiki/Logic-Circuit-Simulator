@@ -82,52 +82,62 @@ class LogicGate {
     }
 
     draw(ctx) {
+        const baseColor = this.getGateColor();
+
         // 選択状態のハイライト
         if(this.selected) {
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#1e90ff';
+            ctx.strokeStyle = '#1e90ff';
+            ctx.lineWidth = 4;
             ctx.strokeRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
+            ctx.shadowBlur = 0;
         }
 
-        // 回路本体
-        ctx.fillStyle = this.getGateColor();
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        
-        ctx.strokeStyle = '#374151';
+        // 回路本体 - グラデーションで立体感
+        const gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+        gradient.addColorStop(0, this.lightenColor(baseColor, 20));
+        gradient.addColorStop(1, baseColor);
+
+        ctx.fillStyle = gradient;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 3;
+
+        // 角丸の四角形
+        this.roundRect(ctx, this.x, this.y, this.width, this.height, 8);
+        ctx.fill();
+
+        // 境界線
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.strokeStyle = this.darkenColor(baseColor, 20);
         ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        this.roundRect(ctx, this.x, this.y, this.width, this.height, 8);
+        ctx.stroke();
 
         // ラベル
         ctx.fillStyle = 'white';
-        ctx.font = 'bold 14px sans-serif';
+        ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.shadowBlur = 2;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
         ctx.fillText(this.getLabel(), this.x + this.width/2, this.y + this.height/2);
+        ctx.shadowBlur = 0;
 
         // 入力ピン
         this.inputPins.forEach((pin, i) => {
             const isHovered = hoveredPin && hoveredGate === this && hoveredPin.type === 'input' && hoveredPin.index === i;
-            
-            ctx.fillStyle = this.inputValues[i] === 1 ? '#ef4444' : '#6b7280';
-            ctx.beginPath();
-            ctx.arc(pin.x, pin.y, isHovered ? 8 : 6, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.strokeStyle = isHovered ? '#fbbf24' : '#374151';
-            ctx.lineWidth = isHovered ? 3 : 2;
-            ctx.stroke();
+            this.drawPin(ctx, pin.x, pin.y, this.inputValues[i], isHovered);
         });
 
         // 出力ピン
         this.outputPins.forEach((pin, i) => {
             const isHovered = hoveredPin && hoveredGate === this && hoveredPin.type === 'output' && hoveredPin.index === i;
-            
-            ctx.fillStyle = this.outputValue === 1 ? '#ef4444' : '#6b7280';
-            ctx.beginPath();
-            ctx.arc(pin.x, pin.y, isHovered ? 8 : 6, 0, 2 * Math.PI);
-            ctx.fill();
-            ctx.strokeStyle = isHovered ? '#fbbf24' : '#374151';
-            ctx.lineWidth = isHovered ? 3 : 2;
-            ctx.stroke();
+            this.drawPin(ctx, pin.x, pin.y, this.outputValue, isHovered);
         });
 
         // 入力値表示（INPUTの場合）
@@ -142,6 +152,65 @@ class LogicGate {
             ctx.fillStyle = '#1f2937';
             ctx.font = 'bold 20px sans-serif';
             ctx.fillText(this.outputValue.toString(), this.x + this.width/2, this.y - 15);
+        }
+    }
+
+    // 角丸の四角形を描画
+    roundRect(ctx, x, y, width, height, radius) {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+
+    // 色を明るくする
+    lightenColor(color, percent) {
+        const num = parseInt(color.replace("#",""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.min(255, (num >> 16) + amt);
+        const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+        const B = Math.min(255, (num & 0x0000FF) + amt);
+        return "#" + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
+    }
+
+    // 色を暗くする
+    darkenColor(color, percent) {
+        const num = parseInt(color.replace("#",""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.max(0, (num >> 16) - amt);
+        const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
+        const B = Math.max(0, (num & 0x0000FF) - amt);
+        return "#" + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
+    }
+
+    // ピンの描画
+    drawPin(ctx, x, y, value, isHovered) {
+        const radius = isHovered ? 9 : 7;
+
+        // 外側の円（ベース）
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = value === 1 ? '#1e90ff' : '#e5e7eb';
+        ctx.fill();
+
+        // 境界線
+        ctx.strokeStyle = isHovered ? '#fbbf24' : (value === 1 ? '#1873cc' : '#9ca3af');
+        ctx.lineWidth = isHovered ? 3 : 2;
+        ctx.stroke();
+
+        // 内側のハイライト（値が1の時）
+        if(value === 1) {
+            ctx.beginPath();
+            ctx.arc(x - 1, y - 1, radius - 3, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fill();
         }
     }
 
@@ -166,11 +235,14 @@ class LogicGate {
     }
 
     getClickedPin(x, y) {
+        // クリック判定半径を大きくして使いやすく（15px）
+        const clickRadius = 15;
+
         // 入力ピンをチェック
         for(let i = 0; i < this.inputPins.length; i++) {
             const pin = this.inputPins[i];
             const dist = Math.sqrt((x - pin.x) ** 2 + (y - pin.y) ** 2);
-            if(dist <= 10) {
+            if(dist <= clickRadius) {
                 return {type: 'input', index: i, pin: pin};
             }
         }
@@ -179,7 +251,7 @@ class LogicGate {
         for(let i = 0; i < this.outputPins.length; i++) {
             const pin = this.outputPins[i];
             const dist = Math.sqrt((x - pin.x) ** 2 + (y - pin.y) ** 2);
-            if(dist <= 10) {
+            if(dist <= clickRadius) {
                 return {type: 'output', index: i, pin: pin};
             }
         }
