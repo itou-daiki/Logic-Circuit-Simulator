@@ -63,11 +63,28 @@
             </div>
         </div>
 
+        <!-- クイックスタートガイド -->
+        <div id="quickStartGuide" class="mx-4 mt-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border-2 border-blue-300 shadow-md">
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-blue-800">🚀 クイックスタート</h3>
+                <button id="closeQuickStart" class="text-blue-600 hover:text-blue-800 font-bold">✕</button>
+            </div>
+            <div class="mt-2 text-sm text-gray-700 space-y-1">
+                <p><strong class="text-blue-700">1.</strong> 上部のボタンで回路を選択し、キャンバスをクリックして配置</p>
+                <p><strong class="text-blue-700">2.</strong> 出力ピン（右側）をクリック後、入力ピン（左側）をクリックして接続</p>
+                <p><strong class="text-blue-700">3.</strong> 入力回路をクリックして値を切り替え（0/1）</p>
+                <p><strong class="text-blue-700">4.</strong> 「シミュレート開始」で動作確認！</p>
+            </div>
+        </div>
+
         <div class="canvas-container relative mx-4 my-6 border-2 border-blue-300 rounded-xl overflow-hidden bg-white shadow-lg">
             <div class="absolute top-2 right-2 z-10 flex gap-2">
-                <button id="zoomIn" class="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 font-medium">🔍+</button>
-                <button id="zoomOut" class="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 font-medium">🔍-</button>
-                <button id="zoomReset" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 font-medium">100%</button>
+                <button id="zoomIn" class="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 font-medium" title="拡大">🔍+</button>
+                <button id="zoomOut" class="bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 font-medium" title="縮小">🔍-</button>
+                <button id="zoomReset" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 font-medium" title="リセット">100%</button>
+            </div>
+            <div class="absolute top-2 left-2 z-10">
+                <button id="showHelp" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg shadow-md transition-all duration-200 font-medium" title="ヘルプ">❓</button>
             </div>
             <canvas id="canvas" width="1000" height="600"></canvas>
         </div>
@@ -145,24 +162,46 @@
             <div id="truthTableContent"></div>
         </div>
 
-        <div class="instructions mx-4 my-4 p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl border-l-4 border-primary shadow-lg">
-            <h3 class="text-xl font-bold text-blue-800 mb-4">📚 使い方</h3>
-            <ol class="text-gray-700 leading-relaxed space-y-2 list-decimal list-inside">
-                <li><strong class="text-blue-700">回路選択:</strong> 上のボタンで配置したい回路を選択</li>
-                <li><strong class="text-blue-700">配置:</strong> キャンバス上をクリックして回路を配置（ドラッグで移動可能）</li>
-                <li><strong class="text-blue-700">接続:</strong> 「接続モード」をクリック後、出力ピン→入力ピンの順でクリック</li>
-                <li><strong class="text-blue-700">入力設定:</strong> 入力回路をクリックして値を切り替え（0/1）</li>
-                <li><strong class="text-blue-700">シミュレート:</strong> 下のボタンでシミュレーションを開始</li>
-                <li><strong class="text-blue-700">ズーム:</strong> 右上のボタンで拡大・縮小が可能</li>
-            </ol>
+        <!-- キーボードショートカット -->
+        <div id="helpModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div class="bg-white rounded-2xl p-6 max-w-2xl mx-4 shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-blue-800">📚 ヘルプ</h3>
+                    <button id="closeHelp" class="text-gray-600 hover:text-gray-800 text-2xl font-bold">✕</button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-lg font-bold text-blue-700 mb-2">⌨️ キーボードショートカット</h4>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div class="bg-blue-50 p-2 rounded"><kbd class="bg-white px-2 py-1 rounded border border-blue-300">D</kbd> ドラッグモード</div>
+                            <div class="bg-blue-50 p-2 rounded"><kbd class="bg-white px-2 py-1 rounded border border-blue-300">C</kbd> 接続モード</div>
+                            <div class="bg-blue-50 p-2 rounded"><kbd class="bg-white px-2 py-1 rounded border border-blue-300">Delete</kbd> 削除モード</div>
+                            <div class="bg-blue-50 p-2 rounded"><kbd class="bg-white px-2 py-1 rounded border border-blue-300">Ctrl+Z</kbd> 元に戻す</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-blue-700 mb-2">💡 使い方のヒント</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• ピンをクリックすると自動的に接続モードになります</li>
+                            <li>• 回路はドラッグで移動できます</li>
+                            <li>• 入力回路をクリックすると値が切り替わります</li>
+                            <li>• テンプレートから回路例を読み込めます</li>
+                            <li>• ズームボタンで拡大・縮小ができます</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- 教育パネル -->
         <div class="education-panel mx-4 mb-6 bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-blue-200">
-            <div class="education-header bg-gradient-to-r from-primary to-blue-600 text-white p-6 text-center">
-                <h2 class="text-2xl font-bold">🎓 論理回路ガイド - 回路図・ベン図・真理値表</h2>
+            <div class="education-header bg-gradient-to-r from-primary to-blue-600 text-white p-4 cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all" id="toggleEducationPanel">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold">🎓 論理回路ガイド - 回路図・ベン図・真理値表</h2>
+                    <span id="educationPanelToggle" class="text-2xl">▼</span>
+                </div>
             </div>
-            <div class="education-content flex flex-wrap gap-6 p-6">
+            <div class="education-content flex flex-wrap gap-6 p-6" id="educationContent">
                 <!-- AND回路 -->
                 <div class="logic-gate-card flex-1 min-w-[300px] bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border-2 border-blue-300 hover:border-primary hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
                     <div class="gate-title text-xl font-bold mb-4 text-center text-blue-800">AND回路（論理積）</div>

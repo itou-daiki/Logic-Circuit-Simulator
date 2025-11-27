@@ -147,12 +147,12 @@ class LogicGate {
 
     getGateColor() {
         switch(this.type) {
-            case 'AND': return '#10b981';
-            case 'OR': return '#3b82f6';
-            case 'NOT': return '#8b5cf6';
-            case 'INPUT': return '#f59e0b';
-            case 'OUTPUT': return '#ef4444';
-            default: return '#6b7280';
+            case 'AND': return '#1e90ff';  // 青（メインカラー）
+            case 'OR': return '#4aa3ff';   // 明るい青
+            case 'NOT': return '#1873cc';  // 濃い青
+            case 'INPUT': return '#06b6d4'; // シアン
+            case 'OUTPUT': return '#0891b2'; // ティール
+            default: return '#64748b';     // スレートグレー
         }
     }
 
@@ -201,28 +201,39 @@ class Connection {
         const fromPos = this.fromGate.outputPins[this.fromPin];
         const toPos = this.toGate.inputPins[this.toPin];
 
-        ctx.strokeStyle = this.signal === 1 ? '#ef4444' : '#6b7280';
-        ctx.lineWidth = 3;
+        // 信号値に応じて色とスタイルを変更（青テーマ）
+        if(this.signal === 1) {
+            ctx.strokeStyle = '#1e90ff'; // 青（信号あり）
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = 'rgba(30, 144, 255, 0.5)';
+        } else {
+            ctx.strokeStyle = '#94a3b8'; // グレー（信号なし）
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 0;
+        }
+
         ctx.beginPath();
         ctx.moveTo(fromPos.x, fromPos.y);
-        
+
         // ベジェ曲線で滑らかな接続線
         const cpx1 = fromPos.x + 50;
         const cpx2 = toPos.x - 50;
         ctx.bezierCurveTo(cpx1, fromPos.y, cpx2, toPos.y, toPos.x, toPos.y);
         ctx.stroke();
+        ctx.shadowBlur = 0;
 
         // 信号値の表示（オプション）
         if(simulator.showSignalValues) {
             const midX = (fromPos.x + toPos.x) / 2;
             const midY = (fromPos.y + toPos.y) / 2;
-            
+
             // 背景の円
-            ctx.fillStyle = this.signal === 1 ? '#ef4444' : '#6b7280';
+            ctx.fillStyle = this.signal === 1 ? '#1e90ff' : '#94a3b8';
             ctx.beginPath();
             ctx.arc(midX, midY, 12, 0, 2 * Math.PI);
             ctx.fill();
-            
+
             // 信号値のテキスト
             ctx.fillStyle = 'white';
             ctx.font = 'bold 14px sans-serif';
@@ -236,10 +247,10 @@ class Connection {
             const t = (Date.now() % 1000) / 1000;
             const animX = fromPos.x + (toPos.x - fromPos.x) * t;
             const animY = fromPos.y + (toPos.y - fromPos.y) * t;
-            
+
             ctx.fillStyle = '#fbbf24';
             ctx.beginPath();
-            ctx.arc(animX, animY, 4, 0, 2 * Math.PI);
+            ctx.arc(animX, animY, 5, 0, 2 * Math.PI);
             ctx.fill();
         }
     }
@@ -369,10 +380,10 @@ class Simulator {
 
     startDetailedSimulation() {
         // 詳細表示エリアを表示
-        document.getElementById('simulationDetails').style.display = 'block';
+        document.getElementById('simulationDetails').classList.remove('hidden');
         document.getElementById('simulationSteps').innerHTML = '';
         currentSimulationStep = 0;
-        
+
         // 初期状態を記録
         this.recordDetailedStep('初期状態', '入力値の設定と回路のリセット');
         this.updateSimulationDisplay();
@@ -678,7 +689,7 @@ class Simulator {
         ctx.restore();
 
         // シミュレーション詳細を非表示
-        document.getElementById('simulationDetails').style.display = 'none';
+        document.getElementById('simulationDetails').classList.add('hidden');
         if (autoStepInterval) {
             clearInterval(autoStepInterval);
             autoStepInterval = null;
@@ -1881,16 +1892,16 @@ document.addEventListener('keydown', (e) => {
 function generateDynamicTruthTable() {
     const inputGates = Array.from(simulator.gates.values()).filter(gate => gate.type === 'INPUT');
     const outputGates = Array.from(simulator.gates.values()).filter(gate => gate.type === 'OUTPUT');
-    
+
     if (inputGates.length === 0 || outputGates.length === 0) {
-        document.getElementById('dynamicTruthTable').style.display = 'none';
+        document.getElementById('dynamicTruthTable').classList.add('hidden');
         return;
     }
-    
+
     // 入力が4つを超える場合は表示しない（テーブルが大きくなりすぎるため）
     if (inputGates.length > 4) {
         const truthTableDiv = document.getElementById('dynamicTruthTable');
-        truthTableDiv.style.display = 'block';
+        truthTableDiv.classList.remove('hidden');
         document.getElementById('truthTableContent').innerHTML = `
             <div class="truth-table-info">
                 ⚠️ 入力数が多すぎます（${inputGates.length}個）。真理値表は入力数が4個以下の場合のみ表示されます。
@@ -1967,7 +1978,7 @@ function generateDynamicTruthTable() {
     
     // 表示
     document.getElementById('truthTableContent').innerHTML = infoHTML + tableHTML;
-    document.getElementById('dynamicTruthTable').style.display = 'block';
+    document.getElementById('dynamicTruthTable').classList.remove('hidden');
 }
 
 // 回路変更時に真理値表を更新
@@ -2002,7 +2013,7 @@ simulator.addConnection = function(fromGate, fromPin, toGate, toPin) {
 const originalClear = simulator.clear;
 simulator.clear = function() {
     originalClear.call(this);
-    document.getElementById('dynamicTruthTable').style.display = 'none';
+    document.getElementById('dynamicTruthTable').classList.add('hidden');
 };
 
 // ズーム機能
@@ -2023,4 +2034,69 @@ document.getElementById('zoomOut').addEventListener('click', () => {
 document.getElementById('zoomReset').addEventListener('click', () => {
     zoomLevel = 1.0;
     draw();
+});
+
+// クイックスタートガイドの制御
+document.getElementById('closeQuickStart').addEventListener('click', () => {
+    document.getElementById('quickStartGuide').classList.add('hidden');
+    localStorage.setItem('hideQuickStart', 'true');
+});
+
+// 初回訪問でない場合はクイックスタートを非表示
+if (localStorage.getItem('hideQuickStart') === 'true') {
+    document.getElementById('quickStartGuide').classList.add('hidden');
+}
+
+// ヘルプモーダルの制御
+document.getElementById('showHelp').addEventListener('click', () => {
+    document.getElementById('helpModal').classList.remove('hidden');
+});
+
+document.getElementById('closeHelp').addEventListener('click', () => {
+    document.getElementById('helpModal').classList.add('hidden');
+});
+
+// モーダル外クリックで閉じる
+document.getElementById('helpModal').addEventListener('click', (e) => {
+    if (e.target.id === 'helpModal') {
+        document.getElementById('helpModal').classList.add('hidden');
+    }
+});
+
+// 教育パネルの折りたたみ
+document.getElementById('toggleEducationPanel').addEventListener('click', () => {
+    const content = document.getElementById('educationContent');
+    const toggle = document.getElementById('educationPanelToggle');
+    content.classList.toggle('hidden');
+    toggle.textContent = content.classList.contains('hidden') ? '▶' : '▼';
+});
+
+// キーボードショートカット
+document.addEventListener('keydown', (e) => {
+    // Ctrl+Zで元に戻す（現時点では未実装）
+    if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        // TODO: Undo機能を実装
+        console.log('Undo機能は現在開発中です');
+    }
+
+    // Dキーでドラッグモード
+    if (e.key === 'd' || e.key === 'D') {
+        document.getElementById('dragMode').click();
+    }
+
+    // Cキーで接続モード
+    if (e.key === 'c' || e.key === 'C') {
+        document.getElementById('connectMode').click();
+    }
+
+    // ?キーでヘルプ表示
+    if (e.key === '?') {
+        document.getElementById('helpModal').classList.remove('hidden');
+    }
+
+    // Escキーでヘルプを閉じる
+    if (e.key === 'Escape') {
+        document.getElementById('helpModal').classList.add('hidden');
+    }
 });
